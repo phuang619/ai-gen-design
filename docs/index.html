@@ -191,6 +191,11 @@ canvas.grab{cursor:grab}
 #err{position:fixed;inset:0;display:none;place-items:center;color:#C86B5C;padding:24px;
   font:400 13px/1.8 ui-monospace,Menlo,monospace;text-align:center;white-space:pre-line}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
+/* the build it came from, small and out of the way */
+#ver{position:fixed;right:6px;bottom:4px;z-index:5;pointer-events:none;
+  font:400 9px/1 ui-monospace,SFMono-Regular,Menlo,monospace;
+  color:rgba(255,255,255,.28);letter-spacing:.4px;
+  text-shadow:0 1px 2px rgba(0,0,0,.5)}
 </style>
 </head>
 <body>
@@ -334,6 +339,7 @@ canvas.grab{cursor:grab}
          style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none">
 </div>
 
+<div id="ver">2026-09-12 14:32</div>
 <script>
 /* Read while the painter sizes its buffers, so it lives at the very top of the
    script. Declared further down it fell in the dead zone; tucked inside a
