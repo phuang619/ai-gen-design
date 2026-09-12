@@ -11,21 +11,36 @@ html,body{height:100%;overflow:hidden;background:#12181F;
   color:#E6E2D8;-webkit-text-size-adjust:100%}
 canvas{display:block;width:100%;height:100%;touch-action:none}
 #bar{position:fixed;left:16px;bottom:max(16px,env(safe-area-inset-bottom));
-  display:flex;align-items:center;gap:12px;flex-wrap:wrap;
-  justify-content:flex-start;width:min(300px,calc(100vw - 32px));
+  display:flex;flex-direction:column;align-items:stretch;gap:2px;
+  width:166px;max-width:calc(100vw - 32px);
   background:rgba(10,15,21,.76);backdrop-filter:blur(12px);
   border:1px solid rgba(255,255,255,.09);border-radius:16px;padding:10px 14px}
-.swb{padding:5px 8px;display:flex;align-items:center}
-.swb i{display:block;width:22px;height:16px;border-radius:4px;
-  border:1px solid rgba(255,255,255,.3)}
+/* A plain disc the size of an icon: the capsule and the boxed chip inside it
+   put two frames around what is only a colour. */
+/* the metallic extension: remove this rule to take it out */
+/* the metallic extension: the same panel as the picker, since it is part of it */
+#metalRow{position:fixed;z-index:20;background:rgba(10,15,21,.95);
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:9px;
+  display:flex;flex-direction:column;gap:3px}
+#metalRow[hidden]{display:none}
 #pick{position:fixed;z-index:20;background:rgba(10,15,21,.95);
   backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.12);
-  border-radius:12px;padding:10px;width:230px}
+  border-radius:12px;padding:9px;width:196px}
+/* With the colour half hidden there is nothing to be 230px wide for: the panel
+   shrinks to the slider and the slider takes the room. */
+#pick[data-mode="erase"]{width:168px}
+#pick[data-mode="erase"] #opRow{width:100%;margin:0}
+#pick[data-mode="erase"] #opRow input{flex:1 1 auto;width:auto}
 #pick[hidden]{display:none}
-#sv,#hue{display:block;width:208px;border-radius:5px;cursor:crosshair;
+/* An author rule setting display beats the browser's own [hidden] rule, so
+   hiding #sv (display:block) or .prow (display:flex) from script did nothing
+   at all. Say it once, for everything. */
+[hidden]{display:none !important}
+#sv,#hue{display:block;width:100%;border-radius:5px;cursor:crosshair;
   touch-action:none}
-#hue{margin-top:8px;height:15px}
-.prow{display:flex;align-items:center;gap:8px;margin-top:9px}
+#hue{margin-top:2px;height:15px}
+.prow{display:flex;align-items:center;gap:2px;margin-top:3px}
 #hex{width:74px;flex:none;background:rgba(255,255,255,.06);
   border:1px solid rgba(255,255,255,.14);border-radius:5px;color:#E6E2D8;
   font:400 11px/1 ui-monospace,Menlo,monospace;padding:6px 7px;text-transform:uppercase}
@@ -36,7 +51,46 @@ canvas{display:block;width:100%;height:100%;touch-action:none}
   color:#8A97A6;font:inherit;font-size:11.5px;padding:6px 11px;cursor:pointer;white-space:nowrap}
 .tb:hover:not([disabled]){color:#E6E2D8;border-color:rgba(255,255,255,.34)}
 .tb[aria-pressed="true"]{background:#6FA8CE;color:#0B1017;border-color:#6FA8CE}
+/* An icon draws its own ring, so the button underneath it does not need one
+   too - the capsule around each one, and the longer capsule around a group,
+   put two or three outlines around the same mark. */
+.tb.ic{border:none;background:none}
+/* After .tb, or its border comes back and rings the colour. */
+.swb{padding:0;border:none;background:none;width:34px;height:34px;
+  display:grid;place-items:center}
+.swb:hover:not([disabled]){border:none}
+.swb i{display:block;width:20px;height:20px;border-radius:999px}
+.tb.ic:hover:not([disabled]){color:#E6E2D8}
+.tb.ic[aria-pressed="true"]{background:none;color:#6FA8CE}
+/* Marked rather than matched with :has, which Safari only learned recently. */
+.seg.icons{border:none;overflow:visible;gap:1px}
+.seg.icons .tb{border-right:none}
 .tb[disabled]{opacity:.32;cursor:default}
+/* Icon buttons: one square, so a row holds far more than words did. The label
+   survives as the tooltip and for screen readers. */
+.tb.ic{padding:0;width:34px;height:34px;display:grid;place-items:center}
+/* Laid out in named rows rather than left to wrap, so what sits where is
+   decided here and not by however wide the panel happens to be. */
+/* Scoped to the toolbar, these left the gradient bar's own row unstyled, so
+   its three buttons stacked instead of sitting side by side. */
+/* One scale: 4 inside a group, 10 between groups, 6 between rows. */
+.row{display:flex;align-items:center;gap:3px}
+.row.split{justify-content:space-between}
+.grp{display:flex;gap:6px}
+/* The grip lies across the top rather than down the side: sideways is the
+   direction that covers the garment, so the panel is kept narrow and allowed
+   to grow downward instead.
+   It is placed against #bar, which is already fixed - saying position again
+   here would override that, and the panel would fly off when dragged. */
+#bar > .grip{width:100%;height:10px;margin-bottom:2px;
+  background:radial-gradient(circle,#E6E2D8 1.1px,transparent 1.2px) 0 3px/6px 6px}
+.seg .tb.ic{width:34px;border-radius:999px}
+.tb.ic svg{display:block;pointer-events:none}
+/* A refused file used to explain itself in words. With those gone the button
+   says it instead, since silence reads as a broken button. */
+.tb.nope{animation:nope .5s ease}
+@keyframes nope{0%,100%{border-color:rgba(255,255,255,.16)}
+  30%,70%{border-color:#C86B5C;color:#C86B5C}}
 .tb:focus-visible,#sw button:focus-visible,input:focus-visible{outline:2px solid #C4A253;
   outline-offset:2px}
 .sep{width:1px;height:20px;background:rgba(255,255,255,.12)}
@@ -47,16 +101,20 @@ canvas{cursor:crosshair}
 canvas.mv{cursor:move}
 #ovl{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:2}
 #ovl > line,#ovl > polygon,#ovl > circle{visibility:hidden}
+#dwell{transition:opacity .12s linear}
 #pgiz rect{fill:#6FA8CE;stroke:#0B1017;stroke-width:2}
 #pbar{position:fixed;left:16px;
   bottom:calc(max(16px,env(safe-area-inset-bottom)) + 62px);display:flex;
-  flex-wrap:wrap;width:min(300px,calc(100vw - 32px));
+  flex-wrap:wrap;width:min(268px,calc(100vw - 32px));
   align-items:center;gap:8px;background:rgba(10,15,21,.85);backdrop-filter:blur(12px);
   border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:9px 12px;z-index:12}
 #pbar[hidden]{display:none}
+#gbar{flex-wrap:wrap}
+#gmode{width:100%;margin-top:2px}
+#gmode[hidden]{display:none}
 #gbar{position:fixed;left:16px;
   bottom:calc(max(16px,env(safe-area-inset-bottom)) + 62px);display:flex;
-  flex-wrap:wrap;width:min(300px,calc(100vw - 32px));
+  flex-wrap:wrap;width:min(268px,calc(100vw - 32px));
   align-items:center;gap:8px;background:rgba(10,15,21,.85);backdrop-filter:blur(12px);
   border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:9px 12px;z-index:12}
 #gbar[hidden]{display:none}
@@ -65,6 +123,37 @@ canvas.mv{cursor:move}
 #patch{display:block;width:220px;height:220px;border:1px solid rgba(255,255,255,.14);border-radius:10px;
   background:rgba(11,16,23,.92);backdrop-filter:blur(10px);z-index:12;
   pointer-events:none}
+/* The drawing pad and its slots, in the corner with the pattern panel. Both
+   are kept inside the view and clear of each other by stackPanels. */
+.pad{position:fixed;right:16px;bottom:calc(max(16px,env(safe-area-inset-bottom)) + 124px);
+  z-index:11;width:166px;background:rgba(10,15,21,.9);backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
+  border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:8px}
+.pad[hidden]{display:none}
+/* Cutting a hole has no colour, so the pad hides its colour while the mask is
+   open. */
+.pad[data-mask="1"] [data-ctl-colour],
+.pad[data-mask="1"] [data-ct="colour"]{display:none}
+/* Attached to the frame, so the tick is where the shape is rather than across
+   the screen in a panel. */
+#msbar,#stbar{position:fixed;z-index:13;display:flex;gap:5px;padding:5px;
+  transform:translate(-50%,0);background:rgba(10,15,21,.85);
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  border:1px solid rgba(255,255,255,.12);border-radius:11px}
+#msbar[hidden],#stbar[hidden]{display:none}
+.pad > .grip{width:100%;height:10px;margin-bottom:4px;
+  background:radial-gradient(circle,#E6E2D8 1.1px,transparent 1.2px) 0 3px/6px 6px}
+#pad{display:block;width:100%;height:156px;border-radius:8px;cursor:crosshair;
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.10);
+  touch-action:none}
+.padrow{display:flex;gap:3px;margin-top:2px;justify-content:flex-start}
+.slots{display:flex;gap:1px;margin-top:2px}
+.slot{width:28px;height:28px;padding:0;border-radius:7px;flex:0 0 auto;
+  border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.04);
+  cursor:pointer;display:grid;place-items:center}
+.slot canvas{width:22px;height:22px;display:block}
+.slot[aria-pressed="true"]{border-color:#6FA8CE;background:rgba(111,168,206,.16)}
+.slot.empty{opacity:.45}
 .pwrap{position:fixed;right:16px;bottom:calc(max(16px,env(safe-area-inset-bottom)) + 124px);
   z-index:11}
 .pwrap[hidden]{display:none}
@@ -77,10 +166,16 @@ canvas.mv{cursor:move}
 .pwrap .grip{position:absolute;left:5px;top:5px;z-index:1}
 .phint{font:400 11px/1 ui-monospace,Menlo,monospace;color:#8A97A6}
 canvas.grab{cursor:grab}
-.sl{display:flex;align-items:center;gap:7px;font:400 11px/1 ui-monospace,Menlo,monospace;
-  color:#8A97A6}
-.sl input{width:74px;accent-color:#6FA8CE}
-.sl b{font-weight:400;color:#E6E2D8;min-width:38px;text-align:right}
+/* The row never wraps and never squeezes its reading out: the track takes what
+   is left after the icon and the number, and may shrink to nothing. */
+.sl{display:flex;align-items:center;gap:3px;white-space:nowrap;overflow:hidden;
+  font:400 11px/1 ui-monospace,Menlo,monospace;color:#8A97A6}
+.sl svg{flex:0 0 auto}
+.sl input{flex:1 1 0;min-width:0;accent-color:#6FA8CE}
+/* Wide enough for the longest reading it ever shows - "100.0 cm" - or the
+   text is pushed past the end of the row. */
+.sl b{font-weight:400;color:#E6E2D8;min-width:52px;text-align:right;
+  white-space:nowrap;flex:0 0 auto}
 #note{position:fixed;left:0;right:0;top:16px;display:flex;justify-content:center;
   pointer-events:none;z-index:30;
   padding:0 16px;pointer-events:none}
@@ -100,16 +195,44 @@ canvas.grab{cursor:grab}
 </head>
 <body>
 <canvas id="c"></canvas>
+<div id="msbar" hidden>
+  <button class="tb ic" id="msApply" data-i="done" title="Keep" aria-label="Keep"></button>
+  <button class="tb ic" id="msCopy" data-i="copy" title="Keep and place another" aria-label="Keep and place another"></button>
+  <button class="tb ic" id="msCancel" data-i="cancel" title="Cancel" aria-label="Cancel"></button>
+</div>
+<div id="stbar" hidden>
+  <button class="tb ic" id="stApply" data-i="done" title="Place" aria-label="Place"></button>
+  <button class="tb ic" id="stCopy" data-i="copy" aria-pressed="false"
+          title="Copy, then click to drop more" aria-label="Copy"></button>
+  <button class="tb ic" id="stCancel" data-i="cancel" title="Cancel" aria-label="Cancel"></button>
+</div>
 <svg id="ovl" aria-hidden="true">
   <polygon id="mirQuad" fill="#C4A253" fill-opacity="0.10" stroke="#C4A253"
            stroke-opacity="0.45" stroke-width="1"/>
   <line id="mirLine" stroke="#C4A253" stroke-width="1.25" stroke-dasharray="7 6"/>
   <circle id="mirDot" r="7" fill="#C4A253" stroke="#0B1017" stroke-width="2"/>
   <line id="guide" stroke="#6FA8CE" stroke-width="1.25" stroke-dasharray="4 4"/>
+  <g id="dwell" style="visibility:hidden">
+    <circle r="13" fill="none" stroke="#0B1017" stroke-opacity="0.45" stroke-width="3.6"/>
+    <circle id="dwellArc" r="13" fill="none" stroke="#6FA8CE" stroke-width="3"
+            stroke-linecap="round" transform="rotate(-90)"/>
+  </g>
   <g id="ggiz" style="visibility:hidden">
+    <defs>
+      <!-- A shape is a picture, not an outline, so the shading is carved by a
+           mask. The grey then has a hole exactly the shape's own. -->
+      <mask id="gcut" maskUnits="userSpaceOnUse"><g id="gcutg"></g></mask>
+    </defs>
     <path id="gexcl" fill="rgba(11,16,23,0.42)" fill-rule="evenodd"
           stroke="#7C8794" stroke-width="1.2" stroke-dasharray="2 5"/>
-    <path id="gpoly" fill="none" stroke="#6FA8CE"
+    <polygon id="mgiz" fill="none" stroke="#6FA8CE" stroke-width="1.6"
+           stroke-dasharray="6 4" style="visibility:hidden"/>
+    <g id="mhandles" style="visibility:hidden"></g>
+    <line id="mrotarm" stroke="#6FA8CE" stroke-width="1.4"
+          style="visibility:hidden"/>
+    <circle id="mrot" r="7" fill="#6FA8CE" stroke="#0B1017" stroke-width="2"
+            style="visibility:hidden"/>
+  <path id="gpoly" fill="none" stroke="#6FA8CE"
           stroke-width="1.6" stroke-dasharray="6 4"/>
     <line id="gline" stroke="#0B1017" stroke-width="4"/>
     <line id="gline2" stroke="#E6E2D8" stroke-width="1.6"/>
@@ -123,73 +246,155 @@ canvas.grab{cursor:grab}
   </g>
 </svg>
 <div id="pick" hidden>
-  <canvas id="sv" width="208" height="144"></canvas>
-  <canvas id="hue" width="208" height="15"></canvas>
-  <label class="sl" id="flowRow">this stop
-    <input type="range" id="stopFlow" min="0" max="100" step="5" value="100"><b id="stopFlowV"></b>
+  <canvas id="sv" width="178" height="124"></canvas>
+  <canvas id="hue" width="178" height="14"></canvas>
+  <label class="sl" id="opRow">opacity
+    <input type="range" id="opacity" min="0" max="100" step="5" value="100"><b id="opacityV"></b>
   </label>
-  <div class="prow">
+  <div class="prow" id="prow">
     <input id="hex" spellcheck="false" maxlength="7" aria-label="Hex colour">
     <button class="tb" id="gremove" hidden>Remove</button>
+    <!-- the metallic extension: remove this button to take it out -->
+    <button class="tb ic" id="metalTool" data-i="soft" aria-pressed="false"
+            title="Metallic" aria-label="Metallic"></button>
     <div id="recent"></div>
   </div>
 </div>
+<!-- the metallic extension: remove this panel to take it out -->
+<div id="metalRow" hidden>
+  <label class="sl">light<input id="metalAngle" type="range"
+    min="-180" max="180" value="-46"><b id="metalAngleV">-46&deg;</b></label>
+  <label class="sl">sheen<input id="metalTight" type="range"
+    min="1" max="24" value="6"><b id="metalTightV">6</b></label>
+  <label class="sl">depth<input id="metalDark" type="range"
+    min="5" max="95" value="30"><b id="metalDarkV">30%</b></label>
+</div>
+<div id="padHost"></div>
 <div class="pwrap" id="patchWrap" hidden><i class="grip" data-drag="patchWrap"></i>
   <canvas id="patch" width="300" height="300"></canvas></div>
 <div id="gbar" hidden><i class="grip" data-drag="gbar"></i>
-  <span class="phint">drag the circles · click one for its colour · click the line to add</span>
-  <button class="tb" id="gmask" aria-pressed="false">Mask</button>
-  <button class="tb" id="ginv" aria-pressed="false">Invert</button>
-  <button class="tb" id="gdone">Done</button>
+  <button class="tb ic" id="gmask" data-i="mask" aria-pressed="false" title="Mask" aria-label="Mask"></button>
+  <button class="tb ic" id="gdone" data-i="done" title="Apply" aria-label="Apply"></button>
+  <button class="tb ic" id="gcancel" data-i="cancel" title="Cancel" aria-label="Cancel"></button>
+  <div class="row" id="gmode" hidden>
+    <button class="tb ic" data-k="free" data-i="maskDraw" aria-pressed="true"
+            title="Draw the area" aria-label="Draw the area"></button>
+    <button class="tb ic" data-k="shape" data-i="maskShape" aria-pressed="false"
+            title="Use a shape" aria-label="Use a shape"></button>
+    <button class="tb ic" id="gmir" data-i="mirror" aria-pressed="false"
+            title="Mirror" aria-label="Mirror"></button>
+    <button class="tb ic" id="ginv" data-i="maskInvert" aria-pressed="false"
+            title="Invert" aria-label="Invert"></button>
+  </div>
 </div>
 <div id="pbar" hidden><i class="grip" data-drag="pbar"></i>
-  <span class="phint" id="pstat">drag to move · squares resize · dot rotates</span>
-  <button class="tb" id="papply">Place</button>
-  <button class="tb" id="pcancel">Cancel</button>
+  <span class="phint" id="pstat"></span>
+  <button class="tb ic" id="papply" data-i="done" title="Place" aria-label="Place"></button>
+  <button class="tb ic" id="pcancel" data-i="cancel" title="Cancel" aria-label="Cancel"></button>
 </div>
 <div id="drop">drop a model or a texture</div>
 <div id="err"></div>
 <div id="bar"><i class="grip" data-drag="bar"></i>
-  <div class="seg" id="modeSeg">
-    <button class="tb" data-m="paint" aria-pressed="true">Paint</button>
-    <button class="tb" data-m="move" aria-pressed="false">Move</button>
+  <div class="row">
+    <div class="seg icons" id="modeSeg">
+      <button class="tb ic" data-m="paint" data-i="paint" aria-pressed="true" title="Paint" aria-label="Paint"></button>
+      <button class="tb ic" data-m="move" data-i="move" aria-pressed="false" title="Move" aria-label="Move"></button>
+    </div>
+    <button class="tb ic" id="gradTool" data-i="grad" aria-pressed="false"
+            title="Gradient" aria-label="Gradient"></button>
+    <button class="tb swb" data-ctl-colour="bar" aria-label="Colour"><i></i></button>
   </div>
-  <div class="sep"></div>
-  <div class="seg" id="toolSeg">
-    <button class="tb" data-t="brush" aria-pressed="true">Brush</button>
-    <button class="tb" data-t="line" aria-pressed="false">Line</button>
-    <button class="tb" data-t="fill" aria-pressed="false">Fill</button>
-    <button class="tb" data-t="grad" aria-pressed="false">Gradient</button>
+  <div id="barCtl"></div>
+  <div class="row">
+    <button class="tb ic" id="soft" data-i="soft" aria-pressed="false" title="Soft edge" aria-label="Soft edge"></button>
+    <button class="tb ic" id="mirror" data-i="mirror" aria-pressed="false" title="Mirror" aria-label="Mirror"></button>
+    <button class="tb ic" id="padOpen" data-i="shapes" title="Shapes" aria-label="Shapes"></button>
+    <button class="tb ic" id="clear" data-i="clear" title="Clear all paint" aria-label="Clear all paint"></button>
   </div>
-  <div class="sep"></div>
-  <button class="tb swb" id="swatch" aria-label="Choose colour"
-          aria-expanded="false"><i></i></button>
-  <div class="sep"></div>
-  <button class="tb" id="erase" aria-pressed="false">Erase</button>
-  <button class="tb" id="soft" aria-pressed="false">Soft</button>
-  <button class="tb" id="mirror" aria-pressed="false">Mirror</button>
-  <label class="sl" style="flex:1 1 100%">size <input type="range" id="size" min="0" max="100" step="1" value="45"><b id="sizeV"></b></label>
-  <label class="sl" style="flex:1 1 100%">flow <input type="range" id="flow" min="5" max="100" step="5" value="85"><b id="flowV"></b></label>
-  <label class="sl" style="flex:1 1 100%">flow <input type="range" id="flow" min="5" max="100" step="5" value="85"><b id="flowV"></b></label>
-  <div class="sep"></div>
-  <button class="tb" id="undo" disabled>Undo</button>
-  <button class="tb" id="redo" disabled>Redo</button>
-  <button class="tb" id="clear">Clear</button>
-  <div class="sep"></div>
-  <button class="tb" id="reset">Reset view</button>
-  <button class="tb" id="impObj">Import object</button>
-  <button class="tb" id="impTex">Import texture</button>
-  <button class="tb" id="photo">Insert photo</button>
-  <button class="tb" id="dlTex">Save texture</button>
-  <input type="file" id="ofile" multiple accept=".glb,.gltf,.obj,.bin"
+  <div class="row">
+    <button class="tb ic" id="impObj" data-i="impObj" title="Import object" aria-label="Import object"></button>
+    <button class="tb ic" id="impTex" data-i="impTex" title="Import texture" aria-label="Import texture"></button>
+    <button class="tb ic" id="photo" data-i="photo" title="Insert photo" aria-label="Insert photo"></button>
+    <button class="tb ic" id="dlTex" data-i="save" title="Save texture" aria-label="Save texture"></button>
+  </div>
+  <div class="row split">
+    <div class="grp">
+      <button class="tb ic" id="reset" data-i="reset" title="Reset view" aria-label="Reset view"></button>
+    </div>
+    <div class="grp">
+      <button class="tb ic" id="undo" data-i="undo" disabled title="Undo" aria-label="Undo"></button>
+      <button class="tb ic" id="redo" data-i="redo" disabled title="Redo" aria-label="Redo"></button>
+    </div>
+  </div>
+  <input type="file" id="ofile" multiple
          style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none">
-  <input type="file" id="tfile" accept=".png,.jpg,.jpeg,.webp"
+  <input type="file" id="tfile" accept="image/*"
          style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none">
   <input type="file" id="pfile" accept="image/*"
          style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none">
 </div>
 
 <script>
+/* Read while the painter sizes its buffers, so it lives at the very top of the
+   script. Declared further down it fell in the dead zone; tucked inside a
+   function it did not exist outside one. Both stopped the page loading. */
+const touch = matchMedia('(pointer: coarse)').matches;
+
+/* Which set of controls the picker is editing. Read by the picker, which runs
+   long before the controls are wired, so it lives up here with touch. */
+/* Both sets of settings, at the top of the file: the picker, the strokes and
+   the pad all read them, and each of those runs long before the controls that
+   change them are built. */
+const ctlState = {
+  bar: {tool: 'brush', erase: false, colour: [0.886, 0.231, 0.180],
+        flow: 1, eraseFlow: 1, smooth: 0, size: 45},
+  paint: {tool: 'brush', erase: false, colour: [0.93, 0.93, 0.93],
+          flow: 1, eraseFlow: 1, smooth: 0, size: 45},
+  mask:  {tool: 'brush', erase: false, colour: [1, 1, 1],
+          flow: 1, eraseFlow: 1, smooth: 0, size: 45},
+};
+
+let ctlWho = 'bar';
+let maskPart = null;   // which part of a mask shape's frame was grabbed
+
+/* ---- metallic, an extension ------------------------------------------------
+   Off unless asked for. The angle is measured in the garment's own frame, so
+   the same stroke bakes the same sheen wherever you happen to be standing. */
+let metalOn = false;
+const metal = {angle: -0.8, tight: 6, dark: 0.3};
+let metalRowWas = null;   // what the panel was last told to do
+/* The sheen at one point along the light, as a fraction from 0 to 1. The one
+   rule both surfaces use: the garment feeds it a place on the cloth, the pad
+   feeds it a place on its own square. Only the coordinate differs. */
+function metalSheen(t) {
+  return Math.exp(-t*t*metal.tight*0.35);
+}
+
+/* The colour that sheen makes of a base colour. */
+function metalInk(base, sheen) {
+  const lit = 0.45 + 0.55*0.9;             // the pad is flat, so fully lit
+  return base.map((v, i) => {
+    const body = v*metal.dark + (v - v*metal.dark)*lit;
+    const tint = v + (1 - v)*0.8;
+    return body + (tint - body)*sheen*0.9;
+  });
+}
+
+function metalDir() {
+  /* Around the garment's upright axis: an angle of zero lights it from the
+     front, negative from the left. The camera plays no part. */
+  const a = metal.angle;
+  return new Float32Array([Math.sin(a)*0.8, 0.55, Math.cos(a)*0.8]);
+}
+
+/* The strength a stroke goes down at. Erasing keeps its own, so switching to it
+   does not borrow the brush's - and every stroke asks here rather than reaching
+   for `flow`, which is only the brush's. */
+function strokeFlow() {
+  const st = ctlState.bar;
+  return st.erase ? st.eraseFlow : st.flow;
+}
+
 /* ==================== procedural garment ====================
    One of the mesh sources. Everything below the FORMATS section treats it
    exactly like an imported file. */
@@ -1371,6 +1576,22 @@ out vec3 vWP; out vec3 vWN; out vec2 vLay;
 void main(){ vWP = aPos; vWN = aNrm; vLay = aLay;
   gl_Position = vec4(aUV*2.0-1.0, 0.0, 1.0); }`;
 
+/* the metallic extension: remove this shader to take it out.
+   Where each texel of the atlas sits on the garment. The fill writes texels
+   straight out rather than going through the stamp, so it has no way to ask
+   where it is - and a metallic fill came out flat. This is the same mesh drawn
+   in atlas space that every bake uses. */
+const WPOS_FS = `
+precision highp float; in vec3 vWP;
+uniform vec3 uWAt; uniform float uWSpan;
+out vec4 o;
+void main(){
+  /* Kept as a fraction of the garment rather than raw metres, so eight bits a
+     channel is ample: a garment is under a metre across, which leaves a step
+     of a couple of millimetres. */
+  o = vec4((vWP - uWAt)*uWSpan*0.5 + 0.5, 1.0);
+}`;
+
 const STAMP_FS = `
 precision highp float;
 in vec3 vWP; in vec3 vWN; in vec2 vLay;
@@ -1384,11 +1605,26 @@ uniform float uMode;     // 0 = round brush, 1 = screen-space mask (fill)
 uniform mat4 uViewProj2;
 uniform vec3 uEye2;
 uniform float uHasMirror;
+/* How the mirrored pass joins the first. A stroke wants the larger of the two -
+   the dab or its mirror. A mask that has been inverted wants the smaller:
+   inverting "the region or its mirror" means "not the region and not its
+   mirror", and taking the larger filled the cut back in. */
+uniform float uPairMin;
 uniform sampler2D uDepth2;
-uniform sampler2D uDepth, uMask, uPhoto, uRamp;
+uniform sampler2D uDepth, uMask, uPhoto, uRamp, uStamp;
+uniform mat2 uStampM;
+uniform vec2 uStampC;
 uniform vec3 uGradA, uGradDir;
 uniform float uGradInv, uPlaneX;
 uniform float uGhost;
+
+/* ---- metallic, an extension ------------------------------------------------
+   A sheen baked into the colour as it goes down, so what is painted is what
+   prints. The direction belongs to the garment, not to the view: lit from the
+   camera, the same stroke would come out differently depending on where you
+   were standing. Nothing here runs unless uMetal is on. */
+uniform float uMetal, uMetalTight, uMetalDark, uMetalSpan;
+uniform vec3 uMetalDir, uMetalColour, uMetalAt;
 vec3 gRGB = vec3(1.0);
 out vec4 o;
 float linear(float z){ float n = z*2.0-1.0;
@@ -1436,15 +1672,41 @@ float dab(mat4 vp, vec3 eye, sampler2D dep, float mir){
   if(any(greaterThan(abs(ndc.xy), vec2(1.05)))) return 0.0;
   vec2 duv = ndc.xy*0.5 + 0.5;
 
-  float shape = uMode < 0.5 ? footprint(duv*uScreen)
-                            : smoothstep(0.25, 0.6, texture(uMask, duv).r);
+  float shape;
+  if(uMode < 0.5) shape = footprint(duv*uScreen);
+  /* Bounded at the top, or the hard fill's mode 5 would be caught here first -
+     the same way a stamp was once caught by the gradient's branch. */
+  else if(uMode > 3.5 && uMode < 4.5){
+    /* A stamp is a picture used as a shape, tested where the texel lands on
+       screen - so it wraps over the surface the way the brush does, rather
+       than being laid into the texture. It is still held to the one pattern
+       piece the frame is over: every vertex is marked beforehand, and anything
+       on another piece is dropped, so the shape stops at a seam.
+
+       The mark rides in the same attribute the photo uses; only one of the two
+       is ever being placed. */
+    if(vLay.x > 8.0) return 0.0;
+    vec2 l = uStampM*(duv*uScreen - uStampC);
+    if(any(greaterThan(abs(l), vec2(1.0)))) return 0.0;
+    vec4 sc = texture(uStamp, (l + 1.0)*0.5);
+    shape = sc.a;
+    /* The shape's texture is uploaded un-premultiplied, so its colour is
+       already the colour it was drawn in. Dividing the alpha out again pushed
+       it past one and everything downstream read the wrong depth. */
+    gRGB = sc.rgb;
+  }
+  else shape = smoothstep(0.25, 0.6, texture(uMask, duv).r);
   if(shape <= 0.0) return 0.0;
 
   // A gradient has no shape of its own: it is a colour that depends on where a
   // point sits along a line, so it crosses seams and curves without any of the
   // trouble a picture has. The mirrored pass reflects the point rather than the
   // line, which comes to the same thing and costs one subtraction.
-  if(uMode > 2.5){
+  /* The gradient only. A stamp is mode 4, which also passes "> 2.5", so this
+     ran for stamps too and overwrote the shape's own colour with the ramp -
+     whose first stop is the toolbar's colour, which is why every shape came out
+     in it however the shape had been drawn. */
+  if(uMode > 2.5 && uMode < 3.5){
     vec3 Q = mir > 0.5 ? vec3(2.0*uPlaneX - vWP.x, vWP.y, vWP.z) : vWP;
     // Only between the two ends. Past either of them there is no gradient, so
     // nothing is laid down rather than the end colour running on forever.
@@ -1464,7 +1726,7 @@ float dab(mat4 vp, vec3 eye, sampler2D dep, float mir){
   // it on how square-on it is rather than which way it points.
   // A wrap is a mapping, not a view: every texel it covers belongs to it,
   // front, back and all the way round.
-  if(uMode < 1.5 && f <= 0.05) return 0.0;
+  if(uMode < 1.5 && f <= 0.05) return 0.0;   // not the hard fill: it is mode 5
 
   // Occlusion. The error to cover is "how much depth does one pixel of the
   // depth map span here", so measure it rather than guess it from the surface
@@ -1501,12 +1763,39 @@ void main(){
     a = dab(uViewProj, uEye, uDepth, 0.0);
     // Reflecting the camera puts the mirrored dab on real geometry with real
     // visibility, so an asymmetric model is no longer a special case.
-    if(uHasMirror > 0.5) a = max(a, dab(uViewProj2, uEye2, uDepth2, 1.0));
+    if(uHasMirror > 0.5) {
+    float a2 = dab(uViewProj2, uEye2, uDepth2, 1.0);
+    a = uPairMin > 0.5 ? min(a, a2) : max(a, a2);
+  }
   }
   if(a <= 0.0) discard;
   // brush and fill carry one colour applied at composite time; a photo brings
   // its own, so it travels premultiplied through the stroke buffer
-  o = uMode < 1.5 ? vec4(a) : vec4(gRGB*a, a);
+  /* A stamp carries no colour of its own - it is a shape, and the colour comes
+     from the toolbar at the moment it is put down, the same way the brush and
+     the fill take theirs. So it writes coverage only and lets the compositing
+     step apply the colour, rather than a colour it never had. */
+  /* A stamp carries the colours it was drawn in, so it goes down as it looked
+     on the pad. Only the fill mask and the brush take the current colour. */
+  /* the metallic extension: remove this block to take it out */
+  if(uMetal > 0.5){
+    vec3 base = uMode < 1.5 ? uMetalColour : gRGB;
+    /* A band running across the garment, not something its shape produces. The
+       front of a shirt is nearly flat, so a sheen taken from the normal alone
+       put the whole stroke at one value and came out a single colour. In print
+       the sheen is a band across the artwork, so it follows the position along
+       the light direction; the normal only shades it. */
+    float t = dot(vWP - uMetalAt, uMetalDir)*uMetalSpan;
+    /* A soft falloff rather than a hard edge, so the whole garment shades
+       instead of one narrow strip on an otherwise flat colour. */
+    float band = exp(-t*t*uMetalTight*0.35);
+    float sheen = band;
+    float lit = 0.45 + 0.55*max(dot(normalize(vWN), uMetalDir), 0.0);
+    vec3 body = mix(base*uMetalDark, base, lit);
+    gRGB = mix(body, mix(base, vec3(1.0), 0.8), sheen*0.9);
+  }
+  // the metallic extension: the uMetal test keeps a plain stroke alpha-only
+  o = (uMode < 1.5 && uMetal < 0.5) ? vec4(a) : vec4(gRGB*a, a);
 }`;
 
 // Coverage + existing paint, from the camera. The flood fill runs on this in
@@ -1541,6 +1830,17 @@ void main(){
   vec4 s = texture(uStroke, vUV);
   o = uStrokeIsPhoto > 0.5 ? s*uOpacity : vec4(uColour*s.a*uOpacity, s.a*uOpacity);
 }`;   // premultiplied, so blending is a plain "over"
+
+/* the alternative fill: remove this shader to take it out.
+   Step one on its own: decide for every texel whether it is more than half
+   covered and make it wholly in or wholly out. Nothing is filled - this only
+   shows what the hard-edged picture looks like. */
+/* the alternative fill: remove this shader to take it out.
+   Where in the atlas a point on screen lands. With that, the whole fill can be
+   done in the atlas - one space, no resampling, so the hardening survives. */
+const UVAT_FS = `precision highp float; in vec2 vUV;
+out vec4 o;
+void main(){ o = vec4(vUV, 0.0, 1.0); }`;
 
 const DILATE_FS = `
 precision highp float; in vec2 vUV;
@@ -1628,9 +1928,15 @@ class Painter {
     this.maskTex = tex2d(4, 4, gl.R8, gl.RED, gl.UNSIGNED_BYTE);
     // the gradient's colours, laid out along one row and read by position
     this.rampTex = tex2d(256, 1, gl.RGBA8, gl.RGBA, gl.UNSIGNED_BYTE, gl.LINEAR);
+    this.stampTex = tex2d(4, 4, gl.RGBA8, gl.RGBA, gl.UNSIGNED_BYTE, gl.LINEAR);
     // A finer depth map narrows the gradient everywhere, which is what the
     // tolerance is made of; 16 MB is a fair trade for it.
-    this.dw = 2048; this.dh = 2048;
+    /* The depth map and the undo ring are the two biggest allocations here, and
+       on a phone they were the wrong way round: the depth map stayed at 2048
+       however small the atlas, and the ring kept MORE snapshots on the small
+       atlas than on the large one. Both follow the device now - iOS drops the
+       whole context rather than paging, so the ceiling matters. */
+    this.dw = this.dh = touch ? 1024 : 2048;
     this.depthTex = tex2d(this.dw, this.dh, gl.DEPTH_COMPONENT24,
       gl.DEPTH_COMPONENT, gl.UNSIGNED_INT, gl.NEAREST);
     this.fDepth = fbo(null, this.depthTex);
@@ -1639,15 +1945,19 @@ class Painter {
     this.fDepth2 = fbo(null, this.depthTex2);
 
     this.pStamp = program(BAKE_VS, STAMP_FS);
+    // the metallic extension: remove this line to take it out
+    this.pWPos = program(BAKE_VS, WPOS_FS);
     this.pDepth = program(DEPTH_VS, EMPTY_FS);
     this.pComp  = program(QUAD_VS, COMPOSITE_FS);
     this.pDil   = program(QUAD_VS, DILATE_FS);
     this.pMask  = program(BAKE_VS, MASK_FS);
     this.pFill  = program(FILL_VS, FILL_FS);
+    // the alternative fill: remove this line to take it out
+    this.pUvAt  = program(FILL_VS, UVAT_FS);
     this.pImp   = program(QUAD_VS, IMPORT_FS);
 
     this.undoRing = []; this.undoAt = -1; this.redoAvail = 0;
-    this.UNDO_MAX = size >= 2048 ? 5 : 10;
+    this.UNDO_MAX = touch ? 4 : (size >= 2048 ? 5 : 10);
 
     this.bakeMask();
     this.clear();
@@ -1705,8 +2015,11 @@ class Painter {
     this.dilate();
   }
 
-  beginStroke(cam, colour, opacity, erase, isPhoto) {
-    this.cur = {colour, opacity, erase, isPhoto: !!isPhoto};
+  beginStroke(cam, colour, opacity, erase, isPhoto, under) {
+    /* the metallic extension: `|| metalOn` makes a metallic stroke carry its
+       own colour, since the sheen differs from texel to texel. */
+    this.cur = {colour, opacity, erase, isPhoto: !!isPhoto || metalOn,
+                under: !!under};
     // drop any redo branch, then remember the state we are about to change
     while (this.undoRing.length > this.undoAt + 1) gl.deleteTexture(this.undoRing.pop());
     this.undoRing.push(this.snapshot());
@@ -1772,6 +2085,17 @@ class Painter {
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
   }
 
+  /* The shape being stamped, kept as coverage only. */
+  setStamp(src) {
+    gl.bindTexture(gl.TEXTURE_2D, this.stampTex);
+    gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, gl.RGBA, gl.UNSIGNED_BYTE, src);
+    for (const q of [gl.TEXTURE_MIN_FILTER, gl.TEXTURE_MAG_FILTER])
+      gl.texParameteri(gl.TEXTURE_2D, q, gl.LINEAR);
+    for (const q of [gl.TEXTURE_WRAP_S, gl.TEXTURE_WRAP_T])
+      gl.texParameteri(gl.TEXTURE_2D, q, gl.CLAMP_TO_EDGE);
+  }
+
   /* The gradient's colours, sampled into one row of pixels. */
   setRamp(px) {
     gl.bindTexture(gl.TEXTURE_2D, this.rampTex);
@@ -1797,7 +2121,40 @@ class Painter {
      that the paint landed as a mirror image of the shape drawn. */
   setMaskPolygon(polys, invert) {
     const S = this.fs, out = new Uint8Array(S*S);
+
+    /* A stamped shape joins the mask the same way a drawn outline does: its
+       coverage is read where each cell of the mask lands on screen. Rows here
+       run bottom-up, matching the fill's own prescan. */
+    for (const st of polys) {
+      if (!st || !st.stamp) continue;
+      const {c, m} = st.stamp, A = st.alpha, N = st.n;
+      /* Judged against the shape's own strongest ink. A shape drawn faintly
+         peaks well below any fixed half, so a fixed one would let it make no
+         mask at all. */
+      let top = 0;
+      for (let i = 3; i < A.length; i += 4) if (A[i] > top) top = A[i];
+      const cut = Math.max(1, top*0.5);
+      const dpr = Math.min(devicePixelRatio || 1, 2);
+      const W = cv.clientWidth, H = cv.clientHeight;
+      for (let y = 0; y < S; y++) {
+        const sy = cv.height - (S - (y + 0.5))/S*H*dpr;
+        for (let x = 0; x < S; x++) {
+          const sx = (x + 0.5)/S*W*dpr;
+          const dx = sx - c[0], dy = sy - c[1];
+          const lx = m[0]*dx + m[2]*dy, ly = m[1]*dx + m[3]*dy;
+          if (lx < -1 || lx > 1 || ly < -1 || ly > 1) continue;
+          /* The same lookup the shader does - (l+1)/2 straight through. An
+             extra flip here turned every stamped mask upside down, which a
+             symmetrical test shape could never have shown. */
+          const u = ((lx + 1)*0.5*N) | 0, v = ((ly + 1)*0.5*N) | 0;
+          if (A[(Math.min(N-1, v)*N + Math.min(N-1, u))*4 + 3] >= cut)
+            out[y*S + x] = 255;
+        }
+      }
+    }
+
     for (const pts of polys) {
+      if (!Array.isArray(pts)) continue;
       const n = pts.length;
       if (n < 3) continue;
       // crossing rule within a shape, union across them
@@ -1818,6 +2175,12 @@ class Painter {
       }
     }
     if (invert) for (let i = 0; i < out.length; i++) out[i] = 255 - out[i];
+    /* Not grown. Hardening squares an edge but keeps a stroke's own strength -
+       a line drawn at a third stays at a third, not solid - so reaching the
+       fill over it lays a second coat and the two read deeper. And it was never
+       needed: read cell by cell, every texel falls in exactly one mask cell,
+       so none can be missed between two. */
+
     gl.bindTexture(gl.TEXTURE_2D, this.maskTex);
     gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
     gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, S, S, gl.RED, gl.UNSIGNED_BYTE, out);
@@ -1864,6 +2227,188 @@ class Painter {
 
   // Flood fill the visible surface from a click, stopping at existing paint.
   // Returns false when the seed is not on the model or is already painted.
+
+  /* the alternative fill: remove this method to take it out.
+     All of it in the atlas, which is the only place the hardening is real.
+     Going out to the screen and back resamples three times over - the paint is
+     read blended, the mask is a different size again, and each step turns a
+     square edge back into a ramp. Here a texel is what it is: painted or bare,
+     nothing between, and the fill takes every bare one it can reach. */
+  /* Which texel a point on screen lands on, seen through a given camera. The
+     mirrored half is reached by asking through the reflected one, which is how
+     every other tool produces its mirror image. */
+  texelUnder(sx, sy, vp) {
+    const c = this.cam;
+    this.ensureFill(Math.max(c.width, c.height));
+    const F = this.fs;
+    gl.bindFramebuffer(gl.FRAMEBUFFER, this.fFill);
+    gl.viewport(0, 0, F, F);
+    gl.enable(gl.DEPTH_TEST); gl.depthFunc(gl.LESS);
+    gl.disable(gl.BLEND); gl.disable(gl.CULL_FACE);
+    gl.clearColor(0, 0, 0, 0);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    gl.useProgram(this.pUvAt.p);
+    gl.uniformMatrix4fv(this.pUvAt.u.uViewProj, false, vp);
+    this.drawMesh();
+    const at = new Uint8Array(4);
+    const fx = Math.round(sx / c.width * F), fy = Math.round(sy / c.height * F);
+    if (fx < 0 || fy < 0 || fx >= F || fy >= F) {
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+      return -1;
+    }
+    gl.readPixels(fx, fy, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, at);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    if (at[3] === 0) return -1;                    // nothing under the press
+    const S = this.size;
+    return Math.min(S-1, Math.round(at[1]/255*S))*S
+         + Math.min(S-1, Math.round(at[0]/255*S));
+  }
+
+  /* the metallic extension: remove this method to take it out.
+     The world place of every texel, so a fill can shade itself the way the
+     stamp does. Drawn into the display buffer, which is free at this point. */
+  worldMap() {
+    const S = this.size;
+    gl.bindFramebuffer(gl.FRAMEBUFFER, this.fDisp);
+    gl.viewport(0, 0, S, S);
+    gl.disable(gl.BLEND); gl.disable(gl.DEPTH_TEST); gl.disable(gl.CULL_FACE);
+    gl.clearColor(0, 0, 0, 0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.useProgram(this.pWPos.p);
+    gl.uniform3fv(this.pWPos.u.uWAt,
+      new Float32Array(mesh ? mesh.centre : [0, 0, 0]));
+    gl.uniform1f(this.pWPos.u.uWSpan, mesh ? 1/(mesh.radius*1.2) : 1);
+    this.drawMesh();
+    const out = new Uint8Array(S*S*4);
+    gl.readPixels(0, 0, S, S, gl.RGBA, gl.UNSIGNED_BYTE, out);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    this.dilate();
+    return out;
+  }
+
+  fillHardAt(sx, sy) {
+    const c = this.cam;
+    const S = this.size;
+
+    /* Both halves when the mirror is on, the same way a stroke gets its pair:
+       the reflected camera says which texel the mirrored point lands on. */
+    const seeds = [this.texelUnder(sx, sy, c.viewProj)];
+    if (this.mirrored && c.viewProj2)
+      seeds.push(this.texelUnder(sx, sy, c.viewProj2));
+
+    // the atlas as it stands
+    const px = new Uint8Array(S*S*4);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, this.fPaint);
+    gl.readPixels(0, 0, S, S, gl.RGBA, gl.UNSIGNED_BYTE, px);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+
+    const start = seeds.filter(i => i >= 0 && px[i*4 + 3] === 0);
+    if (!start.length) return false;
+
+    /* Hardened on a working copy, not on the picture. Every texel is counted as
+       wholly the line or wholly bare, which is what decides where the fill
+       stops - but the picture itself is only written where the fill lands, so
+       the far side of a line is left exactly as it was drawn. */
+    const solid = new Uint8Array(S*S);
+    for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
+      const i = y*S + x;
+      const a = px[i*4 + 3];
+      if (!a) continue;
+      let top = 0;
+      for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) {
+        const nx = x+dx, ny = y+dy;
+        if (nx < 0 || ny < 0 || nx >= S || ny >= S) continue;
+        const v = px[(ny*S + nx)*4 + 3];
+        if (v > top) top = v;
+      }
+      solid[i] = a > top*0.5 ? 1 : 0;
+    }
+
+    // every texel the fill can reach, counting a part-covered one as bare
+    const out = new Uint8Array(S*S);
+    const q = [...start];
+    for (const i of start) out[i] = 1;
+    while (q.length) {
+      const i = q.pop(), x = i % S, y = (i/S)|0;
+      for (const [dx, dy] of [[1,0],[-1,0],[0,1],[0,-1]]) {
+        const nx = x+dx, ny = y+dy;
+        if (nx < 0 || ny < 0 || nx >= S || ny >= S) continue;
+        const j = ny*S + nx;
+        if (out[j] || solid[j]) continue;
+        out[j] = 1;
+        q.push(j);
+      }
+    }
+
+    const col = this.cur.colour;
+    const r = Math.round(col[0]*255), g = Math.round(col[1]*255),
+          b = Math.round(col[2]*255);
+    const alpha = Math.round(Math.max(0.02, this.cur.opacity)*255);
+    /* the metallic extension: the same sheen a stroke gets, asked for at each
+       texel's own place - writing one flat colour made a metallic fill look
+       painted on. */
+    const wm = metalOn ? this.worldMap() : null;
+    const dir = metalDir();
+    const sp = mesh ? mesh.radius*1.2 : 1;
+    const inkAt = i => {
+      const t = ((wm[i*4]/255 - 0.5)*2*sp*dir[0]
+               + (wm[i*4+1]/255 - 0.5)*2*sp*dir[1]
+               + (wm[i*4+2]/255 - 0.5)*2*sp*dir[2]) / (mesh ? mesh.radius*0.9 : 1);
+      return metalInk(col, metalSheen(t)).map(v => Math.round(v*255));
+    };
+    /* Premultiplied, as everything in the atlas is. Written straight, the
+       colour reads at one over its own strength too bright, and the bleed into
+       the gutter spreads that outward as a glow. */
+    const f = alpha/255;
+    for (let i = 0; i < S*S; i++) {
+      if (!out[i]) continue;
+      const [r2, g2, b2] = wm ? inkAt(i) : [r, g, b];
+      px[i*4] = Math.round(r2*f); px[i*4+1] = Math.round(g2*f);
+      px[i*4+2] = Math.round(b2*f); px[i*4+3] = alpha;
+    }
+
+    /* Soften the join. Hardening squared off the edge between the fill and the
+       outline, which is a stair once they are different colours. Each filled
+       texel along that edge takes a share of the outline's colour, by how much
+       of its surroundings the outline holds - so the step becomes a ramp one
+       texel wide. Only the fill's side is touched; the outline keeps its own
+       texels exactly. */
+    /* Both sides of the join, not one. A texel takes a share of whatever is on
+       the other side of the edge, by how much of its surroundings that side
+       holds - so the fill's outer rim and the outline's inner rim each carry a
+       little of the other and the step becomes a ramp. Read from the picture as
+       it stands, so the two sides mix with each other rather than with a result
+       half made. A texel with nothing on the far side is left alone, which is
+       every part of the outline that the fill never reached. */
+    const soft = new Uint8Array(px);
+    for (let y = 1; y < S-1; y++) for (let x = 1; x < S-1; x++) {
+      const i = y*S + x;
+      const mine = out[i] ? 1 : (solid[i] ? 2 : 0);
+      if (!mine) continue;
+      let n = 0, edge = 0, er = 0, eg = 0, eb = 0, ea = 0;
+      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+        const j = (y+dy)*S + (x+dx);
+        n++;
+        const theirs = out[j] ? 1 : (solid[j] ? 2 : 0);
+        if (!theirs || theirs === mine) continue;
+        edge++;
+        er += px[j*4]; eg += px[j*4+1]; eb += px[j*4+2]; ea += px[j*4+3];
+      }
+      if (!edge) continue;
+      const w = edge/n;                       // how much of it the far side holds
+      // both are premultiplied, so they mix straight
+      soft[i*4]   = Math.round(px[i*4]  *(1-w) + (er/edge)*w);
+      soft[i*4+1] = Math.round(px[i*4+1]*(1-w) + (eg/edge)*w);
+      soft[i*4+2] = Math.round(px[i*4+2]*(1-w) + (eb/edge)*w);
+      soft[i*4+3] = Math.round(px[i*4+3]*(1-w) + (ea/edge)*w);
+    }
+
+    gl.bindTexture(gl.TEXTURE_2D, this.paint);
+    gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, S, S, gl.RGBA, gl.UNSIGNED_BYTE, soft);
+    this.dilate();
+    return true;
+  }
+
   buildFillMask(sx, sy) {
     const c = this.cam;
     this.ensureFill(Math.max(c.width, c.height));
@@ -1877,53 +2422,67 @@ class Painter {
     gl.useProgram(this.pFill.p);
     gl.uniformMatrix4fv(this.pFill.u.uViewProj, false, c.viewProj);
     gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, this.paint);
+    /* Read the paint texel by texel. Blended between texels, a hardened edge
+       arrives here as a ramp again - and a ramp pixel is neither the line nor
+       bare, which is what left cells to fill that were already the line. */
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
     gl.uniform1i(this.pFill.u.uPaint, 0);
     gl.uniform2f(this.pFill.u.uTexel, 1/this.size, 1/this.size);
     this.drawMesh();
     const px = new Uint8Array(S * S * 4);
     gl.readPixels(0, 0, S, S, gl.RGBA, gl.UNSIGNED_BYTE, px);
+    gl.bindTexture(gl.TEXTURE_2D, this.paint);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 
     const cx = Math.round(sx / c.width * S), cy = Math.round(sy / c.height * S);
     if (cx < 0 || cy < 0 || cx >= S || cy >= S) return false;
     const seed = cy * S + cx;
     if (px[seed * 4 + 1] < 128) return false;          // not on the model
-    const LIMIT = 90;                                   // "already painted"
+    /* Any paint at all stops the spread, however faint. A threshold of 90 meant
+       a line drawn below about 35% strength read as bare cloth and the fill
+       walked straight through it - the growing below is what keeps the edge
+       from showing, so no tolerance is needed here. */
+    const LIMIT = 1;
     if (px[seed * 4] >= LIMIT) return false;
 
-    const out = new Uint8Array(S * S);
-    const stack = new Int32Array(S * S);
-    let top = 0, bx0 = S, bx1 = 0, by0 = S, by1 = 0;
-    stack[top++] = seed; out[seed] = 255;
-    while (top > 0) {
-      const i = stack[--top], x = i % S, y = (i / S) | 0;
-      if (x < bx0) bx0 = x; if (x > bx1) bx1 = x;
-      if (y < by0) by0 = y; if (y > by1) by1 = y;
-      for (let k = 0; k < 4; k++) {
-        const nx = x + (k === 0 ? 1 : k === 1 ? -1 : 0);
-        const ny = y + (k === 2 ? 1 : k === 3 ? -1 : 0);
-        if (nx < 0 || ny < 0 || nx >= S || ny >= S) continue;
-        const j = ny * S + nx;
-        if (out[j]) continue;
-        if (px[j * 4 + 1] < 128 || px[j * 4] >= LIMIT) continue;
-        out[j] = 255; stack[top++] = j;
-      }
-    }
+    const spread = floodFrom(seed, S, S,
+      j => px[j*4 + 1] >= 128 && px[j*4] < LIMIT);
+    const out = spread.out;
+    let bx0 = spread.x0, bx1 = spread.x1, by0 = spread.y0, by1 = spread.y1;
     // The fill stops where paint is already solid, which leaves its edge sitting
     // just inside the outline. Growing it a couple of pixels tucks it under the
     // outline instead, so no pale ring survives between the two.
-    const GROW = 6;
-    bx0 = Math.max(0, bx0-GROW); bx1 = Math.min(S-1, bx1+GROW);
-    by0 = Math.max(0, by0-GROW); by1 = Math.min(S-1, by1+GROW);
-    for (let pass = 0; pass < GROW; pass++) {
+    /* Grown a few pixels past its edge so it reaches under the outline's soft
+       inner rim; stopping short of it left a pale ring between the two. The
+       doubling that used to cause is handled where the stroke is composited:
+       a fill takes the deeper of itself and what is already there, so the
+       overlap reads as one coat rather than two. */
+    /* The same climb on the cloth: only ever to a texel with more paint than
+       the one before, so a stroke can be tucked under but never crossed. */
+    for (let more = true; more; ) {
+      more = false;
       const src = out.slice();
-      for (let y = by0; y <= by1; y++) for (let x = bx0; x <= bx1; x++) {
+      for (let y = 1; y < S-1; y++) for (let x = 1; x < S-1; x++) {
         const i = y*S + x;
         if (src[i] || px[i*4+1] < 128) continue;
-        if ((x > 0 && src[i-1]) || (x < S-1 && src[i+1]) ||
-            (y > 0 && src[i-S]) || (y < S-1 && src[i+S])) out[i] = 255;
+        const here = px[i*4];
+        let rising = false;
+        for (const j of [i-1, i+1, i-S, i+S])
+          if (px[j*4] > here + 2) { rising = true; break; }
+        if (!rising) continue;
+        for (const j of [i-1, i+1, i-S, i+S])
+          if (src[j] && here > px[j*4] + 2) { out[i] = 255; more = true; break; }
       }
     }
+    /* Not grown. Hardening squares an edge but keeps a stroke's own strength -
+       a line drawn at a third stays at a third, not solid - so reaching the
+       fill over it lays a second coat and the two read deeper. And it was never
+       needed: read cell by cell, every texel falls in exactly one mask cell,
+       so none can be missed between two. */
+
     gl.bindTexture(gl.TEXTURE_2D, this.maskTex);
     gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
     gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, S, S, gl.RED, gl.UNSIGNED_BYTE, out);
@@ -1933,7 +2492,11 @@ class Painter {
 
   // one dab. A stroke is many of these walked along the pointer path.
   stamp(x, y, radius, hard, flow, opts) {
-    const c = this.cam, P = this.pStamp;
+    /* A preview is drawn without beginning a stroke, so it brings its own
+       camera. Falling back on the last stroke's meant a preview drew nothing at
+       all until something had been committed. */
+    const c = (opts && opts.cam) || this.cam, P = this.pStamp;
+    if (!c) return;
     gl.bindFramebuffer(gl.FRAMEBUFFER, this.fStroke);
     gl.viewport(0, 0, this.size, this.size);
     gl.disable(gl.DEPTH_TEST); gl.disable(gl.CULL_FACE);
@@ -1962,7 +2525,14 @@ class Painter {
     gl.uniform1f(P.u.uBiasMax, c.biasMax);
     gl.uniform1f(P.u.uBiasLimit, c.biasLimit);
     gl.uniform2f(P.u.uDepthTexel, 1/this.dw, 1/this.dh);
-    gl.uniform1f(P.u.uMode, O.grad ? 3 : O.photo ? 2 : O.mask ? 1 : 0);
+    gl.uniform1f(P.u.uMode, O.stamp ? 4 : O.grad ? 3 : O.photo ? 2 : O.mask ? 1 : 0);
+    if (O.stamp) {
+      gl.uniform2f(P.u.uStampC, O.stamp.c[0], O.stamp.c[1]);
+      gl.uniformMatrix2fv(P.u.uStampM, false, O.stamp.m);
+      gl.activeTexture(gl.TEXTURE6);
+      gl.bindTexture(gl.TEXTURE_2D, this.stampTex);
+      gl.uniform1i(P.u.uStamp, 6);
+    }
     gl.uniform1f(P.u.uPlaneX, planeX || 0);
     if (O.grad) {
       gl.uniform3fv(P.u.uGradA, O.grad.a);
@@ -1981,6 +2551,19 @@ class Painter {
     }
     const useMirror = !!(O.mirror && c.viewProj2);
     gl.uniform1f(P.u.uHasMirror, useMirror ? 1 : 0);
+    gl.uniform1f(P.u.uPairMin, O.pairMin ? 1 : 0);
+    /* the metallic extension: remove these six lines to take it out */
+    const mt = metalOn ? metal : null;
+    gl.uniform1f(P.u.uMetal, mt ? 1 : 0);
+    gl.uniform1f(P.u.uMetalTight, mt ? mt.tight : 1);
+    gl.uniform1f(P.u.uMetalDark, mt ? mt.dark : 1);
+    gl.uniform3fv(P.u.uMetalDir, mt ? metalDir() : new Float32Array([0, 1, 0]));
+    // where the band sits, and how wide it is, in the garment's own units
+    gl.uniform3fv(P.u.uMetalAt,
+      new Float32Array(mesh ? mesh.centre : [0, 0, 0]));
+    gl.uniform1f(P.u.uMetalSpan, mesh ? 1/(mesh.radius*0.9) : 1);
+    gl.uniform3fv(P.u.uMetalColour,
+      new Float32Array(this.cur && this.cur.colour ? this.cur.colour : [1, 1, 1]));
     if (useMirror) {
       gl.uniformMatrix4fv(P.u.uViewProj2, false, c.viewProj2);
       gl.uniform3fv(P.u.uEye2, c.eye2);
@@ -2007,6 +2590,9 @@ class Painter {
     gl.enable(gl.BLEND);
     gl.blendEquation(gl.FUNC_ADD);
     if (this.cur.erase) gl.blendFunc(gl.ZERO, gl.ONE_MINUS_SRC_ALPHA);
+    /* The same on the cloth: a fill colours in the empty part of each texel and
+       leaves the paint already there untouched. */
+    else if (this.cur.under) gl.blendFunc(gl.ONE_MINUS_DST_ALPHA, gl.ONE);
     else gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
     gl.useProgram(P.p);
     gl.activeTexture(gl.TEXTURE0);
@@ -2207,11 +2793,13 @@ function draw() {
   gl.uniform3fv(U.uL1, L(0.35, 0.55, 0.76));
   gl.uniform3fv(U.uL2, L(-0.65, 0.20, -0.45));
   gl.uniform3fv(U.uStrokeColour, new Float32Array(colour));
-  // A photo being placed lives in the stroke buffer just like a brush stroke,
-  // but nothing is "painting" while it is dragged around, so the preview has
-  // to be switched on explicitly - and it carries its own colour.
-  gl.uniform1f(U.uStrokeOpacity, photo ? 1 : (painting ? flow : 0));
-  gl.uniform1f(U.uStrokeIsPhoto, photo ? 1 : 0);
+  /* Anything in the frame - a photo or a shape - lives in the stroke buffer and
+     carries its own colours, so the preview is switched on explicitly and reads
+     them from the buffer. A brush stroke instead takes the toolbar's colour and
+     the strength it will be laid at. */
+  gl.uniform1f(U.uStrokeOpacity, photo ? 1 : (painting ? strokeFlow() : 0));
+  // the metallic extension: `|| metalOn` shows the sheen while it is drawn
+  gl.uniform1f(U.uStrokeIsPhoto, (photo || metalOn) ? 1 : 0);
   gl.uniform1f(U.uErase, photo ? 0 : (erase ? 1 : 0));
   gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, painter.disp);
   gl.uniform1i(U.uPaint, 0);
@@ -2238,7 +2826,78 @@ function draw() {
   for (const el of [ml, mq, md]) el.style.visibility = shown ? 'visible' : 'hidden';
   return cam;
 }
-(function loop(){ requestAnimationFrame(loop); if (dirty && painter) { dirty=false; draw(); } })();
+/* ---- holding still to straighten -----------------------------------------
+   A brush stroke keeps its points as it is drawn. Stand still for half a
+   second and the piece drawn since you last moved is pulled toward the
+   straight line between its ends: every point's distance from that line is
+   multiplied by (1 - amount), so at half the peak is halved and the shape is
+   kept, and at full it becomes the line itself. Standing still longer applies
+   it again, so it keeps straightening for as long as you hold.
+
+   Nothing is committed until the button is released, so this redraws the
+   stroke rather than painting over it. */
+let smoothAmt = 0;                       // 0 leaves the stroke alone
+const DWELL_MS = 1000, DWELL_MOVE = 4;
+let padTick = null;      // set once the shape pad is built
+
+/* The garment, expressed as somewhere for a stroke to land. Same engine as the
+   shape pad; only these few lines differ. */
+let modelStroke = null;
+function makeModelStroker() {
+  const dpr = () => Math.min(devicePixelRatio || 1, 2);
+  return makeStroker({
+    erasing: () => ctlState.bar.erase,
+    get step() { return Math.max(radius*dpr()*0.18, 1.2); },
+    jitter: 4,
+    live: true,                      // dabs land as they are made
+    ownTools: true,                  // line and fill have their own route here
+    smooth: () => ctlState.bar.smooth,
+    dab: (p, pressure) => stampAt(p, pressure),
+    redraw(st) {
+      if (!st.pts) return;
+      painter.clearStroke();
+      for (const q of st.pts) stampAt(q, q[2] === undefined ? 1 : q[2]);
+      dirty = true;
+    },
+    done() {},                       // the release path already ends the stroke
+    fill(p) {
+      if (painter.buildFillMask(p[0], p[1])) {
+        painter.stamp(0, 0, 0, 1.0, 1.0, {mask: true});
+        dirty = true;
+      }
+    },
+    ring(at, f) { dwellRing = {at, f}; dirty = true; },
+  });
+}
+let dwellRing = null;
+
+
+
+function drawDwellRing() {
+  const g = document.getElementById('dwell');
+  const arc = document.getElementById('dwellArc');
+  if (!dwellRing || !smoothAmt) { g.style.visibility = 'hidden'; return; }
+  const dpr = Math.min(devicePixelRatio || 1, 2);
+  const x = dwellRing.at[0]/dpr;
+  const y = (cv.height - dwellRing.at[1])/dpr;
+  const f = dwellRing.f;
+  const C = 2*Math.PI*13;
+  g.setAttribute('transform', 'translate(' + x.toFixed(1) + ',' + y.toFixed(1) + ')');
+  arc.setAttribute('stroke-dasharray', (C*f).toFixed(2) + ' ' + C.toFixed(2));
+  // fade in, so it does not flicker on and off while the hand is still moving
+  g.setAttribute('opacity', Math.min(1, f*4).toFixed(2));
+  g.style.visibility = 'visible';
+}
+
+(function loop(){
+  requestAnimationFrame(loop);
+  metalRowWatch();   // the metallic extension: remove this line
+  if (modelStroke) { dwellRing = null; modelStroke.tick(); drawDwellRing(); }
+  // the pad holds still in the same way; it is defined further down, so the
+  // loop calls it rather than reaching into its state before it exists
+  if (padTick) padTick();
+  if (dirty && painter) { dirty=false; draw(); }
+})();
 addEventListener('resize', () => { dirty = true; });
 
 /* ===========================================================================
@@ -2248,6 +2907,16 @@ const noteTxt = {className: ""};
 /* No tips, no reports, no warnings. Nothing is announced: the toolbar says
    what the tools are, and the model on screen says what was imported. */
 function note() {}
+
+/* The one bit of feedback left: the button that was pressed flinches. */
+function refuse(id) {
+  const b = document.getElementById(id);
+  if (!b) return;
+  b.classList.remove('nope');
+  void b.offsetWidth;                        // restart the animation
+  b.classList.add('nope');
+  setTimeout(() => b.classList.remove('nope'), 600);
+}
 
 let lastRaw = null, upMode = 'auto', smoothMode = 'file';
 function load(raw, up) {
@@ -2260,8 +2929,7 @@ function load(raw, up) {
   patternCanvas = null;
   islMap = null;
   rayGrid = null;
-  const touch = matchMedia('(pointer: coarse)').matches;
-  const S = touch || m.area > 3 ? 1024 : 2048;
+    const S = touch || m.area > 3 ? 1024 : 2048;
   painter = new Painter(m, S);
 
   target = [m.centre[0], m.centre[1], m.centre[2]];
@@ -2288,15 +2956,35 @@ function load(raw, up) {
 // and outlines live.
 const SZ_MIN = 0.8, SZ_MAX = 150;
 const sliderRadius = t => SZ_MIN*Math.pow(SZ_MAX/SZ_MIN, t/100);
-let colour = [0.886, 0.231, 0.180], radius = sliderRadius(45), flow = 0.85, erase = false;
+let colour = [0.886, 0.231, 0.180], radius = sliderRadius(45), flow = 1.0, erase = false;
 let tool = 'brush', mirror = false, planeX = 0, hardness = 1.0;
 let painting = false, lastPt = null, lineFrom = null;
+
+
 
 /* ---- colour: continuous HSV, not a fixed palette ---------------------- */
 const svC = document.getElementById('sv'), hueC = document.getElementById('hue');
 const svX = svC.getContext('2d'), hueX = hueC.getContext('2d');
 const pick = document.getElementById('pick');
-const swatch = document.getElementById('swatch');
+/* The picker hangs off the toolbar's copy of the controls. */
+/* One block of controls, put wherever drawing happens: the toolbar and the
+   shape pad. Mounted here, before anything looks a control up - built later,
+   the swatch below came back empty. */
+/* Two shape pads, entirely apart: one for painting on the cloth, one for
+   cutting the mask. They share every line of logic and none of their state, so
+   drawing in one leaves the other exactly as it was. The mask's draws in white
+   only - a hole has no colour. */
+document.getElementById('padHost').innerHTML =
+  padMarkup('paint', false) + padMarkup('mask', true);
+
+document.getElementById('barCtl').innerHTML = controlsMarkup('bar');
+document.getElementById('paint-ctl').innerHTML = controlsMarkup('paint');
+document.getElementById('mask-ctl').innerHTML = controlsMarkup('mask', true);
+
+/* The toolbar's colour, which now sits beside the panel's own buttons rather
+   than inside the controls block - the old selector looked for it in the block
+   and came back empty, and everything hung off it threw. */
+const swatch = document.querySelector('[data-ctl-colour="bar"]');
 const hexIn = document.getElementById('hex');
 let H = 0, S = 0.82, Vv = 0.90, recent = ['#E23B2E', '#F0A32A', '#2C6FC4', '#1A1A1E'];
 
@@ -2337,14 +3025,36 @@ function drawPicker() {
   hueX.strokeStyle = '#fff'; hueX.lineWidth = 2; hueX.stroke();
 }
 
+/* Re-ink the pad when the colour changes: its alpha is the shape, the colour
+   is only the showing of it. */
+
+
+/* Open the picker against whichever swatch was pressed, and remember whose
+   controls it is editing. */
+function openPickerFor(el) {
+  const st = ctlState[ctlWho];
+  const c = st.colour;
+  const hs = rgb2hsv(c[0], c[1], c[2]);
+  H = hs[0]; S = hs[1]; Vv = hs[2];
+  pickerFor(st.erase ? 'erase' : 'brush');
+  drawPicker();
+  placePicker(el);
+  pick.hidden = false;
+  if (el && el.setAttribute) el.setAttribute('aria-expanded', 'true');
+}
+
 function applyColour(push) {
-  colour = hsv2rgb(H, S, Vv);
-  const hx = toHex(colour);
-  swatch.firstElementChild.style.background = hx;
+  const st = ctlState[ctlWho];
+  st.colour = hsv2rgb(H, S, Vv);
+  ctlSync();
+  const hx = toHex(st.colour);
   if (document.activeElement !== hexIn) hexIn.value = hx;
   drawPicker();
   if (stopTarget) {
-    stopTarget.rgb = colour.slice();
+    /* The colour just chosen, not the toolbar's. Reading the global here gave
+       the stop whatever the toolbar happened to hold - so a stop took the
+       strength that was set for it and a colour that was not. */
+    stopTarget.rgb = st.colour.slice();
     drawGrad();
     applyGradient();
   }
@@ -2353,8 +3063,7 @@ function applyColour(push) {
     drawRecent();
   }
   if (!stopTarget) {
-    erase = false;
-    document.getElementById('erase').setAttribute('aria-pressed', 'false');
+    ctlState[ctlWho].erase = false; ctlSync();
     setMode('paint');
   }
   dirty = true;
@@ -2468,6 +3177,16 @@ function stackPanels() {
       .getBoundingClientRect().height) || 54 : 0;
     wrap.style.bottom = (base + (narrow || busy ? gh + 10 : 0)) + 'px';
   }
+
+  /* The two shape pads sit one above the other when both are open, rather than
+     on top of each other. Whichever is showing takes the lower place. */
+  let up = 16;
+  for (const who of ['paint', 'mask']) {
+    const el = document.getElementById(who + '-wrap');
+    if (!el || el.hidden) continue;
+    if (!el.style.top) el.style.bottom = up + 'px';
+    up += Math.round(el.getBoundingClientRect().height || 300) + 10;
+  }
 }
 addEventListener('resize', stackPanels);
 new ResizeObserver(stackPanels).observe(document.getElementById('bar'));
@@ -2484,27 +3203,40 @@ addEventListener('resize', () => {
 });
 
 function placePicker(at) {
+  // the metallic extension: remove this line to take it out
   const r = at
     ? {left: at[0] - 11, top: at[1] - 11, width: 22, height: 22}
     : swatch.getBoundingClientRect();
-  const w = 230, h = pick.offsetHeight || 300, gap = 10;
-  // whatever is currently occupying the bottom of the screen
-  let floor = gap;
-  for (const id of ['bar', 'gbar', 'pbar']) {
-    const el = document.getElementById(id);
-    if (!el || el.hidden) continue;
-    const b = el.getBoundingClientRect();
-    // a bar the user has dragged up into the view is not a floor any more
-    if (b.height && b.top > innerHeight*0.6)
-      floor = Math.max(floor, innerHeight - b.top + gap);
-  }
-  pick.style.left = Math.round(Math.min(innerWidth - w - gap,
-    Math.max(gap, r.left + r.width/2 - w/2))) + 'px';
+  const w = pick.offsetWidth || 230, h = pick.offsetHeight || 300, gap = 10;
+  const left = Math.round(Math.min(innerWidth - w - gap,
+    Math.max(gap, r.left + r.width/2 - w/2)));
+  pick.style.left = left + 'px';
+
   // above the anchor by preference, below it if there is no room up there
   let bottom = innerHeight - r.top + gap;
   if (bottom + h > innerHeight - gap) bottom = innerHeight - (r.top + r.height) - gap - h;
+  bottom = Math.min(innerHeight - h - gap, Math.max(gap, bottom));
+
+  /* Then lift it clear of any bar it would land on. Judging by how far down the
+     screen a bar sat missed the toolbar once it wrapped to several rows and
+     grew tall - so test the overlap itself, which is the thing that matters. */
+  for (let pass = 0; pass < 4; pass++) {
+    let pushed = false;
+    const top = innerHeight - bottom - h;
+    for (const id of ['bar', 'gbar', 'pbar', 'patchWrap']) {
+      const el = document.getElementById(id);
+      if (!el || el.hidden) continue;
+      const b = el.getBoundingClientRect();
+      if (!b.height) continue;
+      if (left + w <= b.left || b.right <= left) continue;      // side by side
+      if (top + h <= b.top || b.bottom <= top) continue;        // already clear
+      bottom = innerHeight - b.top + gap;                       // sit on top of it
+      pushed = true;
+    }
+    if (!pushed) break;
+  }
   pick.style.bottom = Math.round(
-    Math.min(innerHeight - h - gap, Math.max(floor, bottom))) + 'px';
+    Math.min(innerHeight - h - gap, Math.max(gap, bottom))) + 'px';
 }
 /* The picker, pointed at one stop of the gradient rather than at the brush. */
 let stopTarget = null;
@@ -2512,11 +3244,7 @@ function openStopPicker(st) {
   stopTarget = st;
   [H, S, Vv] = rgb2hsv(...st.rgb);
   hexIn.value = toHex(st.rgb);
-  const fs2 = document.getElementById('stopFlow');
-  fs2.value = String(Math.round(st.flow*100/5)*5);
-  document.getElementById('stopFlowV').textContent = fs2.value + '%';
-  document.getElementById('gremove').hidden = st.t <= 1e-6 || st.t >= 1-1e-6;
-  document.getElementById('flowRow').hidden = false;
+  pickerFor(st.t <= 1e-6 || st.t >= 1-1e-6 ? 'end' : 'stop');
   placePicker(gradProject(gradAt(st.t)));
   pick.hidden = false;
   drawPicker();
@@ -2530,7 +3258,8 @@ document.getElementById('gremove').onclick = () => {
 };
 
 swatch.onclick = e => {
-  document.getElementById('flowRow').hidden = true;
+  stopTarget = null;
+  pickerFor(erase ? 'erase' : 'brush');
   e.stopPropagation();
   const open = pick.hidden;
   pick.hidden = !open;
@@ -2538,8 +3267,17 @@ swatch.onclick = e => {
   if (open) { placePicker(); drawPicker(); }
 };
 addEventListener('pointerdown', e => {
-  if (!pick.hidden && !pick.contains(e.target) && e.target !== swatch)
-    { pick.hidden = true; swatch.setAttribute('aria-expanded', 'false'); }
+  // the metallic extension: its settings belong to this panel, so a press on
+  // them is a press inside it
+  const mrow = document.getElementById('metalRow');
+  if (pick.hidden || pick.contains(e.target) || e.target === swatch
+      || (mrow && !mrow.hidden && mrow.contains(e.target))) return;
+  /* While erasing, the strength is the only thing the panel holds and it is
+     wanted the whole time - closing it on the first press meant reaching for
+     the eraser again to change it. */
+  if (pick.getAttribute('data-mode') === 'erase') return;
+  pick.hidden = true;
+  swatch.setAttribute('aria-expanded', 'false');
 }, true);
 addEventListener('resize', () => { if (!pick.hidden) placePicker(); });
 
@@ -2548,36 +3286,43 @@ function updateSizeLabel() {
   // radius is in CSS pixels; report what it covers on the model right now
   const cm = mesh ? (radius*dpr / (cv.height/2) * dist * Math.tan(0.33)
                      * 2 * mesh.unitCm) : 0;
-  document.getElementById('sizeV').textContent =
-    cm ? (cm < 1 ? (cm*10).toFixed(1) + 'mm' : cm.toFixed(1) + 'cm') : '';
 }
-document.getElementById('size').oninput = e => {
-  radius = sliderRadius(+e.target.value); updateSizeLabel();
-};
 /* The flow slider belongs to whatever the picker is pointed at: a stop of the
    gradient if one is open, otherwise the brush. */
-/* Flow is a property of the brush, so it stays on the toolbar where it can be
-   reached with Erase on - inside the colour picker it was unreachable, and
-   erasing always ran at full strength. */
-document.getElementById('flow').oninput = e => {
-  flow = +e.target.value/100;
-  document.getElementById('flowV').textContent = e.target.value + '%';
+/* One opacity, whatever the picker is currently pointed at: a stop of the
+   gradient, or the brush - which is also the eraser, where full means take the
+   paint away completely. */
+document.getElementById('opacity').oninput = e => {
+  const v = +e.target.value/100;
+  document.getElementById('opacityV').textContent = e.target.value + '%';
+  // a stop only owns the slider while its picker is actually open; once it has
+  // been dismissed the slider is the brush's again
+  if (stopTarget && !pick.hidden) { stopTarget.flow = v; drawGrad(); applyGradient(); }
+  else {
+    // into whichever copy the picker was opened for, and into its erase
+    // strength when that is what is being set
+    stopTarget = null;
+    const st = ctlState[ctlWho];
+    if (st.erase) st.eraseFlow = v; else st.flow = v;
+    ctlSync();
+  }
 };
-/* A gradient stop carries its own, edited beside its colour. */
-document.getElementById('stopFlow').oninput = e => {
-  document.getElementById('stopFlowV').textContent = e.target.value + '%';
-  if (!stopTarget) return;
-  stopTarget.flow = +e.target.value/100;
-  drawGrad();
-  applyGradient();
-};
-document.getElementById('flowV').textContent = '85%';
-document.getElementById('erase').onclick = e => {
-  erase = !erase;
-  e.currentTarget.setAttribute('aria-pressed', String(erase));
-  setMode('paint');
-  dirty = true;
-};
+document.getElementById('opacityV').textContent = '100%';
+
+/* Show the parts that suit whatever is being edited. Erasing has no colour, so
+   only the slider is left. */
+function pickerFor(kind) {
+  pick.setAttribute('data-mode', kind);
+  const show = kind !== 'erase';
+  for (const id of ['sv', 'hue', 'prow'])
+    document.getElementById(id).hidden = !show;
+  document.getElementById('gremove').hidden = kind !== 'stop';
+  const sl = document.getElementById('opacity');
+  const own = ctlState[ctlWho];
+  sl.value = String(Math.round((stopTarget ? stopTarget.flow
+    : own.erase ? own.eraseFlow : own.flow)*100/5)*5);
+  document.getElementById('opacityV').textContent = sl.value + '%';
+}
 function refreshUndo() {
   document.getElementById('undo').disabled = !painter || !painter.canUndo();
   document.getElementById('redo').disabled = !painter || !painter.canRedo();
@@ -2825,17 +3570,6 @@ document.getElementById('modeSeg').addEventListener('click', e => {
   const b = e.target.closest('button');
   if (b) setMode(b.dataset.m);
 });
-document.getElementById('toolSeg').addEventListener('click', e => {
-  const b = e.target.closest('button');
-  if (!b) return;
-  const was = tool;
-  tool = b.dataset.t;
-  for (const x of e.currentTarget.children)
-    x.setAttribute('aria-pressed', String(x === b));
-  setMode('paint');
-  if (was === 'grad' && tool !== 'grad') endGradient();
-  if (tool === 'grad' && !grad && mesh) startGradient();
-});
 document.getElementById('soft').onclick = e => {
   hardness = hardness > 0.95 ? 0.45 : 1.0;
   e.currentTarget.setAttribute('aria-pressed', String(hardness < 0.95));
@@ -2843,6 +3577,8 @@ document.getElementById('soft').onclick = e => {
 document.getElementById('mirror').onclick = e => {
   mirror = !mirror;
   e.currentTarget.setAttribute('aria-pressed', String(mirror));
+  // the mask row shows the same switch, so it says the same thing
+  if (typeof syncMirrorButtons === 'function') syncMirrorButtons();
   if (mirror && mesh) {
     planeX = mesh.centre[0];
     const t = measureAsymmetry();
@@ -2867,12 +3603,186 @@ function pressureOf(e) {
   // would silently paint every mouse stroke at two thirds of the chosen size.
   return e.pointerType === 'pen' ? (e.pressure || 0.5) : 1;
 }
+/* ---- pieces shared by the model and the shape pad ------------------------
+   The two draw onto different things, but the shapes of the work are the same:
+   walk a segment laying dabs, flood a region from a seed, ease a wobble out of
+   a list of points. Each is written once here and handed whatever it should
+   act on. */
+
+/* Lay dabs from a to b, no further apart than step. */
+function walkSegment(a, b, step, put) {
+  const d = Math.hypot(b[0]-a[0], b[1]-a[1]);
+  const n = Math.min(512, Math.max(1, Math.floor(d/Math.max(step, 0.5))));
+  for (let k = 1; k <= n; k++)
+    put([a[0] + (b[0]-a[0])*k/n, a[1] + (b[1]-a[1])*k/n], k/n);
+  return n;
+}
+
+/* Spread from a seed over a grid, through whatever `open` says is passable.
+   Returns the covered cells and the box they sit in. */
+function floodFrom(seed, W, H, open) {
+  const out = new Uint8Array(W*H);
+  const stack = new Int32Array(W*H);
+  let top = 0, x0 = W, x1 = 0, y0 = H, y1 = 0;
+  stack[top++] = seed; out[seed] = 255;
+  while (top > 0) {
+    const i = stack[--top], x = i % W, y = (i/W) | 0;
+    if (x < x0) x0 = x; if (x > x1) x1 = x;
+    if (y < y0) y0 = y; if (y > y1) y1 = y;
+    for (let k = 0; k < 4; k++) {
+      const nx = x + (k === 0 ? 1 : k === 1 ? -1 : 0);
+      const ny = y + (k === 2 ? 1 : k === 3 ? -1 : 0);
+      if (nx < 0 || ny < 0 || nx >= W || ny >= H) continue;
+      const j = ny*W + nx;
+      if (out[j] || !open(j)) continue;
+      out[j] = 255; stack[top++] = j;
+    }
+  }
+  return {out, x0, x1, y0, y1};
+}
+
+/* Ease the wobble out of pts[from..to], leaving the ends where they are.
+   Each pass moves every point toward the midpoint of its neighbours, which
+   attenuates by wavelength - a shake goes quickly, the shape drawn on purpose
+   survives. */
+function easePoints(pts, from, to, passes) {
+  if (passes < 1 || to - from < 4) return;
+  const n = to - from + 1;
+  let cur = new Float64Array(n*2), nxt = new Float64Array(n*2);
+  for (let i = 0; i < n; i++) {
+    cur[i*2] = pts[from+i][0];
+    cur[i*2+1] = pts[from+i][1];
+  }
+  for (let k = 0; k < passes; k++) {
+    nxt[0] = cur[0]; nxt[1] = cur[1];
+    nxt[(n-1)*2] = cur[(n-1)*2]; nxt[(n-1)*2+1] = cur[(n-1)*2+1];
+    for (let i = 1; i < n-1; i++)
+      for (let j = 0; j < 2; j++) {
+        const v = cur[i*2+j];
+        nxt[i*2+j] = v + 0.5*((cur[(i-1)*2+j] + cur[(i+1)*2+j])/2 - v);
+      }
+    const t = cur; cur = nxt; nxt = t;
+  }
+  for (let i = 1; i < n-1; i++) {
+    pts[from+i][0] = cur[i*2];
+    pts[from+i][1] = cur[i*2+1];
+  }
+}
+
+/* ---- an alternative fill, kept apart so it can be taken out ---------------
+   Everything this needs is in this block, plus one switch in the toolbar and
+   one `if` at each of the two places a fill is worked out. Deleting those three
+   things removes it and leaves nothing behind.
+
+   It works the way the ordinary fill does not: instead of spreading through a
+   stroke's soft edge and blending, it first decides for every cell whether it
+   is more than half covered, which gives a hard-edged picture with no soft
+   cells at all. The region is flooded in that, and the boundary is smoothed
+   afterwards. The region can never run away, because the decision is made once
+   per cell rather than by walking. */
+/* The fill was rewritten: it hardens a working copy to decide where to stop,
+   floods that, writes the colour in, and softens the join on both sides. The
+   earlier one - which climbed a stroke's soft edge in screen space - is still
+   here and can be switched back on by setting this to true. */
+const OLD_FILL = false;
+
+/* ---- end of the alternative fill ---------------------------------------- */
+
+/* One stroke, wherever it is being drawn.
+   It holds the points, spaces the dabs, counts the half-seconds of stillness
+   and eases the wobble out - and knows nothing about what it is drawing on.
+   The garment hands it dabs that go through the painter; the shape pad hands
+   it dabs that are circles on a canvas. Line and fill hang off the same
+   dispatch, so neither target can quietly be missing one. */
+/* A straight line, laid the same way whether it is being previewed or kept.
+   Drawing it one way for the preview and another for the commit left a dab at
+   the head that had not been shown. */
+function layLine(a, b, step, put) {
+  put(a);
+  walkSegment(a, b, step, put);
+}
+
+function makeStroker(t) {
+  let pts = null, from = 0, since = 0, still = null, eased = false;
+  let lineFrom2 = null, lineTo = null;
+  const show = () => t.redraw(lineFrom2 ? {line: [lineFrom2, lineTo]} : {pts});
+  return {
+    get drawing() { return !!(pts || lineFrom2); },
+    get points() { return pts; },
+    begin(p, pressure) {
+      // A target can say it handles line and fill itself. The garment routes
+      // both before a stroke is ever begun, and running them here as well
+      // meant a doubled fill and a line that no one ever finished.
+      // Each target says which tool it is on. The pad has its own row of them,
+      // so choosing Line on the toolbar no longer changes what the pad does.
+      /* Erasing is a brush, always. Left as a flag over whichever tool was in
+         hand it erased by flooding or by drawing a line. */
+      const tl = (t.erasing && t.erasing()) ? 'brush'
+        : (t.tool ? t.tool() : tool);
+      if (!t.ownTools) {
+        if (tl === 'fill') { t.fill(p); return; }
+        if (tl === 'line') { lineFrom2 = p; lineTo = p; show(); return; }
+      }
+      pts = [p]; from = 0; still = null; eased = false;
+      t.dab(p, pressure);
+      // A target that lays dabs as they are made has nothing to redraw yet, and
+      // redrawing would wipe the buffer the stroke was just set up in.
+      if (!t.live) show();
+    },
+    move(p, pressure) {
+      if (lineFrom2) { lineTo = p; show(); return; }
+      if (!pts) return;
+      const n = walkSegment(pts[pts.length-1], p, t.step, q => {
+        pts.push(q);
+        if (t.live) t.dab(q, pressure);
+      });
+      if (n > 0 && !t.live) show();
+      const sm = t.smooth ? t.smooth() : smoothAmt;
+      if (sm && (!still || Math.hypot(p[0]-still[0], p[1]-still[1]) > t.jitter)) {
+        // the piece being eased only moves on once something has been eased
+        if (eased) { from = pts.length - 1; eased = false; }
+        still = p;
+        since = performance.now();
+      }
+    },
+    end(pressure) {
+      if (lineFrom2 && lineTo)
+        layLine(lineFrom2, lineTo, t.step, q => t.dab(q, pressure));
+      // hand the points over before letting go of them: reading them back
+      // through the getter afterwards found nothing, and the stroke was lost
+      const finished = pts;
+      const had = pts || lineFrom2;
+      pts = null; lineFrom2 = null; lineTo = null; still = null;
+      if (had) t.done(finished);
+    },
+    /* Called every frame: fills the ring, and eases when it is full. */
+    tick() {
+      const sm = t.smooth ? t.smooth() : smoothAmt;
+      if (!still || !sm || !pts) return;
+      const f = Math.min(1, (performance.now() - since)/DWELL_MS);
+      if (f >= 1) {
+        easePoints(pts, from, pts.length - 1,
+          Math.round(sm*sm*sm*300));
+        eased = true;
+        since = performance.now();
+        t.redraw({pts});
+      }
+      t.ring(still, Math.min(1, (performance.now() - since)/DWELL_MS));
+    },
+    cancel() { pts = null; lineFrom2 = null; lineTo = null; still = null; },
+  };
+}
+
 function stampAt(p, pressure) {
   const dpr = Math.min(devicePixelRatio || 1, 2);
   painter.stamp(p[0], p[1], Math.max(0.6, radius * dpr * (0.35 + 0.65 * pressure)),
     hardness, 1.0, {mirror});
 }
 function stopStroke() {
+  if (modelStroke) modelStroke.end(1);
+  modelStroke = null;
+  dwellRing = null;
+  document.getElementById('dwell').style.visibility = 'hidden';
   if (!painting) return;
   painting = false;
   painter.endStroke();
@@ -2893,6 +3803,27 @@ cv.addEventListener('pointerdown', e => {
     pinch = 0;
   } else if (e.pointerType === 'mouse' && (e.button === 2 || e.button === 1)) {
     role = 'orbit';                       // right button always rotates
+  } else if (maskShape) {
+    const r0 = cv.getBoundingClientRect();
+    const x = e.clientX - r0.left, y = e.clientY - r0.top;
+    if (!maskShape.placed) {
+      /* Only the overlay is redrawn. Recomputing the gradient here restricted
+         it to whatever was kept - nothing, at this point - so the background
+         gradient vanished the instant a shape was dropped on it. */
+      maskShape.cx = x; maskShape.cy = y; maskShape.placed = true;
+      drawGrad();
+      dirty = true;
+      return;
+    }
+    /* The part is carried on the entry made for this pointer, which is set
+       below - reaching for it here found nothing, since it does not exist yet. */
+    maskPart = framePart(maskShape, x, y);
+    role = maskPart ? 'mshape' : 'orbit';
+  } else if (stampSrc && !photo) {
+    // a shape is chosen and waiting: this press decides where it goes
+    const r0 = cv.getBoundingClientRect();
+    if (dropStampFrame(e.clientX - r0.left, e.clientY - r0.top)) return;
+    role = 'orbit';
   } else if (grad && !gmaskArmed &&
              gradPart(e.clientX - cv.getBoundingClientRect().left,
                       e.clientY - cv.getBoundingClientRect().top)) {
@@ -2915,7 +3846,7 @@ cv.addEventListener('pointerdown', e => {
     pts.set(e.pointerId, {role});
   } else if (photo) {
     const r0 = cv.getBoundingClientRect();
-    const part = photoPart(e.clientX - r0.left, e.clientY - r0.top);
+    const part = photo ? framePart(photo, e.clientX - r0.left, e.clientY - r0.top) : null;
     // the placement follows what the frame is over, so the view holds still
     if (!part) { dirty = true; return; }
     role = 'photo';
@@ -2926,19 +3857,48 @@ cv.addEventListener('pointerdown', e => {
     role = mode === 'paint' ? 'paint' : 'pan';
   }
 
+  // Pressing on the background and dragging turns the model, rather than
+  // starting a stroke that has nothing to land on.
+  if (role === 'paint') {
+    const r0 = cv.getBoundingClientRect();
+    if (!overModel(e.clientX - r0.left, e.clientY - r0.top)) role = 'orbit';
+  }
+
   // Keep whatever the branch above recorded. Listing the fields by hand meant
   // a new one was silently dropped, and the release then had nothing to act on.
   const prev = pts.get(e.pointerId) || {};
-  pts.set(e.pointerId, {...prev, x: e.clientX, y: e.clientY, role, t: e.pointerType});
+  /* The part a press landed on belongs to the branch that worked it out. Set
+     here for every role, it overwrote the one the photo branch had just
+     stored - and a photo was then dragged with nothing to drag by. */
+  pts.set(e.pointerId, {...prev, x: e.clientX, y: e.clientY, role,
+                        ...(role === 'mshape' ? {part: maskPart} : {}),
+                        t: e.pointerType});
   if (role === 'photo') { dirty = true; return; }
   if (role === 'paint') {
     if (e.pointerType === 'pen') penDown = true;
     lastPt = local(e);
-    if (tool === 'line') {
+    /* Erasing is a brush whatever tool is in hand, so it never takes the line
+       or the fill route. */
+    if (tool === 'line' && !erase) {
       lineFrom = lastPt;                  // committed on release
       showGuide(e, e);
-    } else if (tool === 'fill') {
-      painter.beginStroke(camera(), colour, flow, erase);
+    } else if (tool === 'fill' && !OLD_FILL && !erase) {
+      /* the alternative fill: remove this branch to take it out.
+         Step one: harden every edge. Step two: fill, which is the ordinary
+         fill run over a picture that now has no part-covered texels - so its
+         judgement about edges has nothing left to get wrong. */
+      /* Begun and closed, not cancelled: cancelling takes the state back off
+         the undo ring, so a step back skipped over this and went to before the
+         lines were drawn. */
+      painter.beginStroke(camera(), colour, strokeFlow(), erase);
+      painter.endStroke();
+      painter.mirrored = mirror;
+      painter.fillHardAt(lastPt[0], lastPt[1]);
+      refreshUndo();
+      dirty = true;
+    } else if (tool === 'fill' && !erase) {
+      // the earlier fill, kept but switched off - see OLD_FILL
+      painter.beginStroke(camera(), colour, strokeFlow(), erase, false, true);
       if (painter.buildFillMask(lastPt[0], lastPt[1])) {
         painter.stamp(0, 0, 0, 1.0, 1.0, {mask: true});
         painting = true;
@@ -2949,8 +3909,9 @@ cv.addEventListener('pointerdown', e => {
       }
     } else {
       painting = true;
-      painter.beginStroke(camera(), colour, flow, erase);
-      stampAt(lastPt, pressureOf(e));
+      painter.beginStroke(camera(), colour, strokeFlow(), erase);
+      modelStroke = makeModelStroker();
+      modelStroke.begin([lastPt[0], lastPt[1]], pressureOf(e));
     }
   }
   if (!noteTxt.className) note('');
@@ -2971,18 +3932,15 @@ cv.addEventListener('pointermove', e => {
     for (const ev of (evs.length ? evs : [e])) {
       const cur = local(ev);
       const d = Math.hypot(cur[0] - lastPt[0], cur[1] - lastPt[1]);
-      const n = Math.min(96, Math.floor(d / step));
-      for (let k = 1; k <= n; k++)
-        stampAt([lastPt[0] + (cur[0] - lastPt[0]) * k / n,
-                 lastPt[1] + (cur[1] - lastPt[1]) * k / n], pressureOf(ev));
-      if (n > 0) lastPt = cur;
+      if (modelStroke) modelStroke.move(cur, pressureOf(ev));
+      if (d >= step) lastPt = cur;
     }
     p.x = e.clientX; p.y = e.clientY;
     dirty = true;
     return;
   }
 
-  if (p.role === 'paint' && tool === 'line' && lineFrom) {
+  if (p.role === 'paint' && tool === 'line' && !erase && lineFrom) {
     showGuide(null, e);
     p.x = e.clientX; p.y = e.clientY;
     return;
@@ -3008,9 +3966,19 @@ cv.addEventListener('pointermove', e => {
     ggiz.style.visibility = 'visible';
     return;
   }
+  if (p.role === 'mshape') {
+    const r0 = cv.getBoundingClientRect();
+    frameDrag(maskShape, p.part || {move: true},
+      e.clientX - r0.left, e.clientY - r0.top, dx, dy, e.shiftKey);
+    drawGrad();                 // the overlay only; the gradient waits
+    dirty = true;
+    return;
+  }
   if (p.role === 'photo') {
     const r0 = cv.getBoundingClientRect();
-    photoDrag(p.part, e.clientX - r0.left, e.clientY - r0.top, dx, dy, e.shiftKey);
+    frameDrag(photo, p.part, e.clientX - r0.left, e.clientY - r0.top,
+      dx, dy, e.shiftKey);
+    previewPhoto();                 // what this frame does after it changes
     return;
   }
   if (p.role === 'mirror') {
@@ -3071,20 +4039,17 @@ function endPointer(e) {
     return;
   }
   if (e.pointerType === 'pen') penDown = false;
-  if (p && p.role === 'paint' && tool === 'line' && lineFrom) {
+  if (p && p.role === 'paint' && tool === 'line' && !erase && lineFrom) {
     // A straight line on screen is not straight on a curved surface, but it is
     // what people mean by "line". Commit it as a run of dabs.
     const to = local(e);
     hideGuide();
-    painter.beginStroke(camera(), colour, flow, erase);
+    painter.beginStroke(camera(), colour, strokeFlow(), erase);
     painting = true;
     const dpr = Math.min(devicePixelRatio || 1, 2);
-    const step = Math.max(radius*dpr*0.18, 1.2);
-    const d = Math.hypot(to[0]-lineFrom[0], to[1]-lineFrom[1]);
-    const n = Math.max(1, Math.min(600, Math.round(d/step)));
-    for (let k = 0; k <= n; k++)
-      stampAt([lineFrom[0] + (to[0]-lineFrom[0])*k/n,
-               lineFrom[1] + (to[1]-lineFrom[1])*k/n], pressureOf(e));
+    const pr = pressureOf(e);
+    stampAt(lineFrom, pr);
+    walkSegment(lineFrom, to, Math.max(radius*dpr*0.18, 1.2), q => stampAt(q, pr));
     lineFrom = null;
     stopStroke();
   } else if (p && p.role === 'paint') stopStroke();
@@ -3120,7 +4085,7 @@ addEventListener('keydown', e => {
     e.preventDefault();
     if (e.shiftKey) painter.redo(); else painter.undo();
     refreshUndo(); dirty = true;
-  } else if (e.key === 'e') document.getElementById('erase').click();
+  } else if (e.key === 'e') { ctlState.bar.erase = !ctlState.bar.erase; ctlSync(); }
   else if (e.key === 'r') document.getElementById('reset').click();
 });
 
@@ -3141,11 +4106,13 @@ async function importFiles(list, want) {
   // will accept, so picking the wrong kind says so instead of silently doing
   // the other thing.
   if (want === 'model' && !main) {
+    refuse('impObj');
     note('That is not a model. Import object takes .glb, .gltf or .obj — '
        + 'for a design use Import texture.', 'bad');
     return;
   }
   if (want === 'texture' && !tex) {
+    refuse('impTex');
     note('That is not an image. Import texture takes .png, .jpg or .webp — '
        + 'for a model use Import object.', 'bad');
     return;
@@ -3211,8 +4178,11 @@ const HANDLES = [[-1,-1],[0,-1],[1,-1],[1,0],[1,1],[0,1],[-1,1],[-1,0]];
 /* Outward from the top edge. The frame's own rotation takes local (0,-1) to
    (sin, -cos); using (-sin, +cos) points the other way and buries the knob
    inside the frame, where it steals presses meant to move the photo. */
-function rotKnob(top) {
-  return [top[0] + Math.sin(photo.ang)*30, top[1] - Math.cos(photo.ang)*30];
+function rotKnob(top, ang) {
+  /* The frame's own angle, passed in: reading the photo's meant a mask shape
+     put its knob wherever the photo happened to be turned. */
+  const a = ang === undefined ? photo.ang : ang;
+  return [top[0] + Math.sin(a)*30, top[1] - Math.cos(a)*30];
 }
 
 function photoCorners() {
@@ -3337,6 +4307,22 @@ function raycast(o, d) {
   return hit ? {...hit, t: best} : null;
 }
 
+/* Is there any garment under this point on screen? */
+function overModel(cx, cy) {
+  if (!mesh) return false;
+  const r = rayAt(cx, cy);
+  return !!raycast(r.o, r.d);
+}
+
+/* A ray through a point given the way a pointer gives it: css pixels from the
+   top left of the canvas. screenRay itself wants the canvas's own pixels
+   measured from the bottom, which every caller was converting for itself - and
+   getting one of those conversions wrong flipped the result top to bottom. */
+function rayAt(cssX, cssY) {
+  const dpr = Math.min(devicePixelRatio || 1, 2);
+  return screenRay(cssX*dpr, cv.height - cssY*dpr);
+}
+
 function screenRay(sx, sy) {
   const c = camera(), th = Math.tan(0.66/2), asp = c.width/c.height;
   const nx = sx/c.width*2 - 1, ny = sy/c.height*2 - 1;
@@ -3349,8 +4335,67 @@ function screenRay(sx, sy) {
 const pgiz = document.getElementById('pgiz');
 
 /* The frame, drawn over the garment where it is being dragged. */
+/* The mask shape's frame: the same look as the placer's, drawn from its own
+   state so the two never share a variable. */
+function drawMaskFrame() {
+  const bar = document.getElementById('msbar');
+  const g = document.getElementById('mgiz');
+  if (!maskShape || !maskShape.placed) {
+    if (g) g.style.visibility = 'hidden';
+    for (const id of ['mhandles', 'mrotarm', 'mrot']) {
+      const e2 = document.getElementById(id);
+      if (e2) e2.style.visibility = 'hidden';
+    }
+    return;
+  }
+  const m = maskShape, ca = Math.cos(m.ang), sa = Math.sin(m.ang);
+  const at = (a, b) => [m.cx + a*m.fw/2*ca - b*m.fh/2*sa,
+                        m.cy + a*m.fw/2*sa + b*m.fh/2*ca];
+  const pts = [[-1,-1],[1,-1],[1,1],[-1,1]].map(([a, b]) => at(a, b));
+  g.setAttribute('points', pts.map(q => q.map(v => v.toFixed(1)).join(',')).join(' '));
+  g.style.visibility = 'visible';
+
+  /* The same corner knobs a photo has, so a shape can be sized and turned
+     rather than only moved. */
+  const host = document.getElementById('mhandles');
+  if (host.childElementCount !== HANDLES.length) {
+    host.innerHTML = '';
+    for (let i = 0; i < HANDLES.length; i++) {
+      const r = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+      r.setAttribute('width', 9); r.setAttribute('height', 9);
+      r.setAttribute('fill', '#6FA8CE');
+      host.appendChild(r);
+    }
+  }
+  HANDLES.forEach((h, i) => {
+    const q = at(h[0], h[1]);
+    host.children[i].setAttribute('x', q[0]-4.5);
+    host.children[i].setAttribute('y', q[1]-4.5);
+  });
+  host.style.visibility = 'visible';
+
+  /* The knob to turn it by. framePart tests for one at this spot; without it
+     drawn there was nothing to take hold of, so a shape could be sized but
+     never turned. */
+  const top = at(0, -1), knob = rotKnob(top, m.ang);
+  const arm = document.getElementById('mrotarm');
+  arm.setAttribute('x1', top[0]); arm.setAttribute('y1', top[1]);
+  arm.setAttribute('x2', knob[0]); arm.setAttribute('y2', knob[1]);
+  arm.style.visibility = 'visible';
+  const dot = document.getElementById('mrot');
+  dot.setAttribute('cx', knob[0]); dot.setAttribute('cy', knob[1]);
+  dot.style.visibility = 'visible';
+  const low = Math.max(...pts.map(q => q[1]));
+  bar.style.left = Math.round(Math.min(innerWidth - 60, Math.max(60, m.cx))) + 'px';
+  bar.style.top = Math.round(Math.min(innerHeight - 46, low + 12)) + 'px';
+}
+
 function drawGizmo() {
-  if (!photo) { pgiz.style.visibility = 'hidden'; return; }
+  if (!photo) {
+    pgiz.style.visibility = 'hidden';
+    document.getElementById('stbar').hidden = true;
+    return;
+  }
   const at = photoCorners();
   document.getElementById('pframe').setAttribute('points',
     [[-1,-1],[1,-1],[1,1],[-1,1]].map(h => at(...h).map(v => v.toFixed(1)).join(',')).join(' '));
@@ -3368,6 +4413,16 @@ function drawGizmo() {
     host.children[i].setAttribute('x', q[0]-4.5);
     host.children[i].setAttribute('y', q[1]-4.5);
   });
+  const bar = document.getElementById('stbar');
+  if (photo.isStamp) {
+    const b = at(0, 1), l = at(-1, 1), r = at(1, 1);
+    const cx = (l[0] + r[0])/2, cy = Math.max(b[1], l[1], r[1]) + 12;
+    bar.style.left = Math.round(Math.min(innerWidth - 60,
+      Math.max(60, cx))) + 'px';
+    bar.style.top = Math.round(Math.min(innerHeight - 46, Math.max(4, cy))) + 'px';
+    bar.hidden = false;
+  } else bar.hidden = true;
+
   const top = at(0, -1), knob = rotKnob(top);
   const arm = document.getElementById('protarm');
   arm.setAttribute('x1', top[0]); arm.setAttribute('y1', top[1]);
@@ -3456,7 +4511,7 @@ function photoUniforms() {
   const PC = pieces || buildPieces();
   const G = rayGrid || (buildRayGrid(), rayGrid);
 
-  const r = screenRay(photo.cx*dpr, H - photo.cy*dpr);
+  const r = rayAt(photo.cx, photo.cy);
   const hit = raycast(r.o, r.d);
   if (!hit) return photo.last || null;
   const k3 = hit.tri*3;
@@ -3512,9 +4567,17 @@ function photoUniforms() {
 
 function previewPhoto() {
   if (!photo) return;
+  if (photo && photo.isStamp) {
+    const su = stampUniforms();
+    painter.clearStroke();
+    if (su) painter.stamp(0, 0, 0, 1, 1, {stamp: su, cam: camera()});
+    drawGizmo();
+    dirty = true;
+    return;
+  }
   const u = photoUniforms();
   painter.clearStroke();
-  if (u) painter.stamp(0, 0, 0, 1, 1, {photo: {...u, ghost: true}});
+  if (u) painter.stamp(0, 0, 0, 1, 1, {photo: {...u, ghost: true}, cam: camera()});
   drawGizmo();
   drawGizmo();
   drawPattern(u);
@@ -3556,7 +4619,15 @@ function endPhoto(commit) {
   if (commit) {
     // the buffer currently holds the ghosted preview; lay it down again with
     // the overshoot excluded before it is composited
-    const u = photoUniforms();
+    if (photo && photo.isStamp) {
+    const su = stampUniforms();
+    painter.clearStroke();
+    if (su) painter.stamp(0, 0, 0, 1, 1, {stamp: su, cam: camera()});
+    drawGizmo();
+    dirty = true;
+    return;
+  }
+  const u = photoUniforms();
     painter.clearStroke();
     if (u) painter.stamp(0, 0, 0, 1, 1, {photo: u});
     painter.endStroke();
@@ -3577,51 +4648,65 @@ document.getElementById('pfile').onchange = async e => {
   catch (err) { note('Could not read that image.\n' + err.message, 'bad'); }
 };
 document.getElementById('papply').onclick = () => endPhoto(true);
+document.getElementById('stApply').onclick = () => placeStamp();
+document.getElementById('stCancel').onclick = () => endStamp();
+document.getElementById('stCopy').onclick = () => { if (photo) copyStamp(); };
+
 document.getElementById('pcancel').onclick = () => endPhoto(false);
 
 /* which part of the gizmo is under the pointer */
-function photoPart(x, y) {
-  if (!photo) return null;
-  const at = photoCorners();
-  const knob = rotKnob(at(0, -1));
-  if (Math.hypot(x-knob[0], y-knob[1]) < 14) return {rot: true};
+/* Which part of a frame a point is on, and how the frame changes when that part
+   is dragged. One pair for every frame there is - a photo, a shape on the
+   cloth, a shape in the mask - because the frame behaves the same in all of
+   them. What differs is only what to redraw afterwards, and that stays with
+   each caller. */
+function framePart(f, x, y) {
+  const ca = Math.cos(f.ang), sa = Math.sin(f.ang);
+  const at = (a, b) => [f.cx + a*f.fw/2*ca - b*f.fh/2*sa,
+                        f.cy + a*f.fw/2*sa + b*f.fh/2*ca];
+  /* The eight points first. The knob sits thirty out from the top edge and
+     catches within fourteen, so testing it first stole presses meant for the
+     top of the frame. */
   for (let i = 0; i < HANDLES.length; i++) {
     const p = at(HANDLES[i][0], HANDLES[i][1]);
     if (Math.hypot(x-p[0], y-p[1]) < 12) return {h: HANDLES[i]};
   }
-  const c = Math.cos(-photo.ang), s2 = Math.sin(-photo.ang);
-  const dx = x-photo.cx, dy = y-photo.cy;
-  const lx = dx*c - dy*s2, ly = dx*s2 + dy*c;
-  if (Math.abs(lx) <= photo.fw/2 && Math.abs(ly) <= photo.fh/2) return {move: true};
+  const knob = rotKnob(at(0, -1), f.ang);
+  if (Math.hypot(x-knob[0], y-knob[1]) < 14) return {rot: true};
+  const c2 = Math.cos(-f.ang), s3 = Math.sin(-f.ang);
+  const dx = x-f.cx, dy = y-f.cy;
+  const lx = dx*c2 - dy*s3, ly = dx*s3 + dy*c2;
+  if (Math.abs(lx) <= f.fw/2 && Math.abs(ly) <= f.fh/2) return {move: true};
   return null;
 }
-function photoDrag(part, x, y, dx, dy, shift) {
-  if (part.move) { photo.cx += dx; photo.cy += dy; }
-  else if (part.rot) {
-    photo.ang = Math.atan2(y-photo.cy, x-photo.cx) + Math.PI/2;
-  } else {
-    // keep the opposite handle pinned, so the frame grows away from it
-    const [hx, hy] = part.h;
-    const at = photoCorners();
-    const anchor = at(-hx || 0, -hy || 0);
-    const c = Math.cos(-photo.ang), s2 = Math.sin(-photo.ang);
-    const ax = x-anchor[0], ay = y-anchor[1];
-    const lx = ax*c - ay*s2, ly = ax*s2 + ay*c;
-    let w = photo.fw, h = photo.fh;
-    if (hx) w = Math.max(12, Math.abs(lx));
-    if (hy) h = Math.max(12, Math.abs(ly));
-    if (shift && hx && hy) {
-      const k = Math.max(w/photo.fw, h/photo.fh);
-      w = photo.fw*k; h = photo.fh*k;
-    }
-    const nc = Math.cos(photo.ang), ns = Math.sin(photo.ang);
-    const ox = hx*w/2, oy = hy*h/2;
-    photo.cx = anchor[0] + ox*nc - oy*ns;
-    photo.cy = anchor[1] + ox*ns + oy*nc;
-    photo.fw = w; photo.fh = h;
+
+function frameDrag(f, part, x, y, dx, dy, shift) {
+  if (part.move) { f.cx += dx; f.cy += dy; return; }
+  if (part.rot) { f.ang = Math.atan2(y-f.cy, x-f.cx) + Math.PI/2; return; }
+  // the opposite handle stays pinned, so the frame grows away from it
+  const [hx, hy] = part.h;
+  const ca = Math.cos(f.ang), sa = Math.sin(f.ang);
+  const at = (a, b) => [f.cx + a*f.fw/2*ca - b*f.fh/2*sa,
+                        f.cy + a*f.fw/2*sa + b*f.fh/2*ca];
+  const anchor = at(-hx || 0, -hy || 0);
+  const c2 = Math.cos(-f.ang), s3 = Math.sin(-f.ang);
+  const ax = x-anchor[0], ay = y-anchor[1];
+  const lx = ax*c2 - ay*s3, ly = ax*s3 + ay*c2;
+  /* Worked out before anything is written back: assigning the width first and
+     then reading it again to place the middle used the new value where the old
+     one was meant, so the frame did not end up where the handle was. */
+  let w = hx ? Math.max(12, Math.abs(lx)) : f.fw;
+  let h = hy ? Math.max(12, Math.abs(ly)) : f.fh;
+  if (shift && hx && hy) {
+    const k = Math.max(w/f.fw, h/f.fh);
+    w = f.fw*k; h = f.fh*k;
   }
-  previewPhoto();
+  const ox = hx*w/2, oy = hy*h/2;
+  f.cx = anchor[0] + ox*ca - oy*sa;
+  f.cy = anchor[1] + ox*sa + oy*ca;
+  f.fw = w; f.fh = h;
 }
+
 
 /* ---- gradient -----------------------------------------------------------
    A colour that depends on where a point falls along a line drawn on the
@@ -3679,6 +4764,129 @@ function rampPixels() {
 /* Lay the gradient down. Each change replaces the last rather than piling on
    top of it, so a stop at less than full flow does not go muddy as it is
    dragged, and one change is still one step to undo. */
+/* ---- a shape used as a mask -------------------------------------------
+   Its own thing, deliberately. It borrows the shape slots from the pad and the
+   frame handles from the placer, but nothing about it goes near the paint
+   layer: while it is being positioned it is simply part of the mask, so the
+   gradient you can see is the answer. One component trying to be both a stamp
+   and a mask is what kept going wrong. */
+let maskShape = null;                 // {alpha,url,n,cx,cy,fw,fh,ang}
+let maskMode = 'free';                // which kind of mask the tool is taking
+
+function maskShapeFrom(src) {
+  const g = document.createElement('canvas');
+  g.width = g.height = PAD_N;
+  g.getContext('2d').drawImage(src, 0, 0);
+  const alpha = g.getContext('2d').getImageData(0, 0, PAD_N, PAD_N).data;
+  return {n: PAD_N, alpha, edge: maskShapeEdge(alpha, PAD_N),
+          url: g.toDataURL ? g.toDataURL() : null};
+}
+
+/* The shape's own outline, in its local square from -1 to 1. A drawn region is
+   traced by the points that made it; a shape has only its picture, so its edge
+   is found where covered cells meet bare ones. Both then get the same dashed
+   outline - the frame around it is a separate thing, for sizing and turning. */
+function maskShapeEdge(alpha, n) {
+  let top = 0;
+  for (let i = 3; i < alpha.length; i += 4) if (alpha[i] > top) top = alpha[i];
+  if (!top) return [];
+  const cut = Math.max(1, top*0.5);
+  /* The picture's own resolution, so the outline reads the very cells the mask
+     reads. A coarser grid left the dashes a few pixels off the real edge, and
+     the larger the shape the more it showed - the same fault as computing it
+     some other way, only smaller. */
+  const G = n;
+  const inside = new Uint8Array(G*G);
+  for (let y = 0; y < G; y++) for (let x = 0; x < G; x++) {
+    inside[y*G + x] = alpha[(y*n + x)*4 + 3] >= cut ? 1 : 0;
+  }
+  const at = (x, y) => (x < 0 || y < 0 || x >= G || y >= G) ? 0 : inside[y*G + x];
+
+  /* Chained into loops, not left as loose segments. A dash pattern restarts on
+     every subpath, and one cell edge is barely a pixel - so a boundary made of
+     separate segments drew every one of them solid. */
+  const key = (x, y) => y*(G+1) + x;
+  const links = new Map();
+  const join = (a, b) => {
+    for (const [p, q] of [[a, b], [b, a]]) {
+      const k = key(p[0], p[1]);
+      if (!links.has(k)) links.set(k, []);
+      links.get(k).push(q);
+    }
+  };
+  for (let y = 0; y < G; y++) for (let x = 0; x < G; x++) {
+    if (!at(x, y)) continue;
+    if (!at(x-1, y)) join([x, y], [x, y+1]);
+    if (!at(x+1, y)) join([x+1, y], [x+1, y+1]);
+    if (!at(x, y-1)) join([x, y], [x+1, y]);
+    if (!at(x, y+1)) join([x, y+1], [x+1, y+1]);
+  }
+
+  const to = v => v/G*2 - 1;          // cell index to the local -1..1 square
+  const seen = new Set();
+  const loops = [];
+  for (const start of links.keys()) {
+    if (seen.has(start)) continue;
+    let at2 = [start % (G+1), (start/(G+1)) | 0];
+    const loop = [];
+    let k = start;
+    while (k !== undefined && !seen.has(k)) {
+      seen.add(k);
+      loop.push([to(at2[0]), to(at2[1])]);
+      const next = (links.get(k) || []).find(q => !seen.has(key(q[0], q[1])));
+      if (!next) break;
+      at2 = next;
+      k = key(at2[0], at2[1]);
+    }
+    if (loop.length > 2) loops.push(loop);
+  }
+  return loops;
+}
+
+function startMaskShape(src) {
+  if (!grad || !mesh) return;
+  const base = maskShapeFrom(src);
+  const fit = Math.min(cv.clientWidth, cv.clientHeight)*0.22;
+  maskShape = {...base, cx: cv.clientWidth/2, cy: cv.clientHeight/2,
+               fw: maskLast ? maskLast.fw : fit,
+               fh: maskLast ? maskLast.fh : fit,
+               ang: maskLast ? maskLast.ang : 0, placed: false};
+  document.getElementById('msbar').hidden = false;
+  drawGrad();
+}
+
+/* The screen transform the rasteriser needs. */
+function maskShapeAt(m) {
+  const dpr = Math.min(devicePixelRatio || 1, 2);
+  const ca = Math.cos(m.ang), sa = Math.sin(m.ang);
+  const hw = Math.max(m.fw/2*dpr, 1), hh = Math.max(m.fh/2*dpr, 1);
+  return {...m, stamp: {c: [m.cx*dpr, cv.height - m.cy*dpr],
+                        m: new Float32Array([ca/hw, -sa/hh, -sa/hw, -ca/hh])}};
+}
+
+let maskLast = null;                  // size and angle carried to the next one
+
+function keepMaskShape() {
+  if (!maskShape || !maskShape.placed || !grad) return false;
+  maskLast = {fw: maskShape.fw, fh: maskShape.fh, ang: maskShape.ang};
+  grad.masks.push(maskShapeAt(maskShape));
+  gradPending = true;
+  return true;
+}
+
+function endMaskShape() {
+  /* The same ending a drawn region has: it is already in the list, so the
+     overlay is redrawn and nothing else. The gradient is worked out once, when
+     the mask is finished - recomputing it here made a shape behave unlike a
+     region drawn by hand, which is the only thing that should differ between
+     them. */
+  maskShape = null;
+  maskPart = null;
+  document.getElementById('msbar').hidden = true;
+  drawGrad();
+  dirty = true;
+}
+
 function applyGradient() {
   if (!grad || !mesh) return;
   // The mask buffer is shared with the fill tool and only sized when that tool
@@ -3691,10 +4899,26 @@ function applyGradient() {
   if (l2 < 1e-12) return;
   painter.setRamp(rampPixels());
   painter.beginStroke(camera(), colour, 1, erase, true);
-  if (grad.masks.length) painter.setMaskPolygon(grad.masks, grad.invert);
+  /* The shape being placed counts as part of the mask while it is being
+     placed, so what is on screen is what will be kept. Showing it some other
+     way meant the gradient had to be torn down and put back, and it flickered
+     away and returned as the shape was moved and copied. */
+  // the shape being positioned counts as part of the mask, so what is on
+  // screen is what will be kept
+  /* Only what has been kept. A shape still being positioned shows by cutting
+     the shading over the garment; the gradient underneath is left alone until
+     it is kept, so the background does not go away while the shape is being
+     moved about. */
+  const use = grad.masks;
+  if (use.length) painter.setMaskPolygon(use, grad.invert);
   else painter.fillMaskAll();
+  /* The mirror duplicates whatever a pass lays down, and a pass reads the mask
+     at wherever its own view puts the point - so the reflected pass reads the
+     mask reflected, and the region comes out mirrored with nothing of its own.
+     It only had to be asked for. */
   painter.stamp(0, 0, 0, 1, 1,
-    {grad: {a: new Float32Array(grad.a), dir: new Float32Array(d), inv: 1/l2}});
+    {grad: {a: new Float32Array(grad.a), dir: new Float32Array(d), inv: 1/l2},
+     mirror, pairMin: !!grad.invert});
   painter.endStroke();
   grad.live = true;
   refreshUndo();
@@ -3743,31 +4967,213 @@ function drawGrad() {
     el.setAttribute('fill', toHex(x.rgb));
     el.setAttribute('fill-opacity', Math.max(x.flow, 0.15));
   });
-  drawMaskShape(gmaskPts ? [...grad.masks, gmaskPts] : grad.masks);
+  drawMaskFrame();
+  drawMaskShape([...grad.masks,
+                 ...(gmaskPts ? [gmaskPts] : []),
+                 ...(maskShape && maskShape.placed ? [maskShape] : [])]);
   ggiz.style.visibility = 'visible';
 }
 
 /* The mask, and the part of the garment it leaves out.
    Both are dashed: the shape you drew in blue, what falls outside it shaded and
    pecked, so it is clear which side the gradient will land on. */
+/* The outline of a shape that was stamped into the mask. */
+/* The shape's outline, placed where the frame puts it. */
+/* Where a point on screen ends up once reflected across the mirror plane. Uses
+   what is already there: a ray to find the point on the cloth, the same
+   reflection the camera uses, and the same projection the handles use. */
+function mirrorScreen(sx, sy) {
+  /* The same guard the mirror itself uses: looking almost straight down the
+     axis, a reflection has nowhere to go and the pair lands on top of itself. */
+  if (!mirror || !mesh || !planeUsable()) return null;
+  const r = rayAt(sx, sy);
+  const h = raycast(r.o, r.d);
+  if (!h) return null;
+  const w = [r.o[0] + r.d[0]*h.t, r.o[1] + r.d[1]*h.t, r.o[2] + r.d[2]*h.t];
+  const q = [2*planeX - w[0], w[1], w[2]];
+  /* And the cloth there has to be facing us. Asking instead whether the ray
+     comes back to the very same point rejected everything: a garment is two
+     sheets, so the reflected point sits on a different part of the surface and
+     the ray naturally lands elsewhere on it. The question is which way the
+     cloth faces, which is what the ray tests already ask - the same dot product
+     against the triangle's normal. */
+  const p = gradProject(q);
+  if (!p) return null;
+  const back = rayAt(p[0], p[1]);
+  const hb = raycast(back.o, back.d);
+  if (!hb) return null;
+  const G = rayGrid;
+  if (!G) return p;
+  const k3 = hb.tri*3;
+  const towards = G.NM[k3]*back.d[0] + G.NM[k3+1]*back.d[1] + G.NM[k3+2]*back.d[2];
+  return towards <= -0.05 ? p : null;
+}
+
+/* The same region, on the other side of the plane. A drawn outline is its
+   points reflected one by one; a shape is its frame reflected, turned the other
+   way and its picture flipped - the mirror duplicates the region, and the
+   region is all that differs between the two kinds. */
+function mirrorRegion(reg, k, W, H) {
+  if (Array.isArray(reg)) {
+    const out = [];
+    for (const p of reg) {
+      const q = mirrorScreen(p[0]/k*W, p[1]/k*H);
+      if (!q) return null;
+      out.push([q[0]/W*k, q[1]/H*k]);
+    }
+    return out.length >= 3 ? out : null;
+  }
+  /* Read off the reflection rather than assumed. Negating the angle is only
+     the right answer when the axis stands upright on screen; the plane is
+     upright in the world, but the camera pitches and the view has perspective,
+     so its image is tilted - and tilted far enough the error reads as the shape
+     being turned over. Reflecting the middle and the two axis tips gives the
+     frame that really results: its place, its size, its angle and which way
+     round it is. */
+  const ca = Math.cos(reg.ang), sa = Math.sin(reg.ang);
+  const tipX = [reg.cx + reg.fw/2*ca, reg.cy + reg.fw/2*sa];
+  const tipY = [reg.cx - reg.fh/2*sa, reg.cy + reg.fh/2*ca];
+  const c = mirrorScreen(reg.cx, reg.cy);
+  const x2 = mirrorScreen(tipX[0], tipX[1]);
+  const y2 = mirrorScreen(tipY[0], tipY[1]);
+  if (!c || !x2 || !y2) return null;
+  const ex = [x2[0] - c[0], x2[1] - c[1]];
+  const ey = [y2[0] - c[0], y2[1] - c[1]];
+  const lx = Math.hypot(ex[0], ex[1]), ly = Math.hypot(ey[0], ey[1]);
+  if (lx < 1 || ly < 1) return null;
+  // the angle comes from the reflected local y, and the handedness from the pair
+  const ang = Math.atan2(ey[0]*-1, ey[1]);
+  const hand = ex[0]*ey[1] - ex[1]*ey[0];
+  const was = (reg.fw/2*ca)*(reg.fh/2*ca) - (reg.fw/2*sa)*(-reg.fh/2*sa);
+  return {...reg, cx: c[0], cy: c[1], fw: lx*2, fh: ly*2, ang,
+          flip: (hand > 0) !== (was > 0) ? !reg.flip : !!reg.flip};
+}
+
+function stampEdge(st) {
+  const e = st.edge;
+  if (!e || !e.length) return stampRing(st);
+  const c = Math.cos(st.ang), sn = Math.sin(st.ang);
+  const hw = st.fw/2, hh = st.fh/2;
+  const pt = (a, b) => [st.cx + a*hw*c - b*hh*sn, st.cy + a*hw*sn + b*hh*c];
+  // one path per loop, so the dashes run along it as they do on a drawn region
+  const fx = st.flip ? -1 : 1;
+  // one path per loop, so the dashes run along it as they do on a drawn region
+  return e.map(loop => 'M' + loop
+    .map(([a, b]) => pt(a*fx, b).map(v => v.toFixed(1)).join(','))
+    .join('L') + 'Z').join('');
+}
+
+function stampRing(st) {
+  const dpr = Math.min(devicePixelRatio || 1, 2);
+  const c = Math.cos(st.ang), sn = Math.sin(st.ang);
+  const hw = st.fw/2, hh = st.fh/2;
+  const pt = (a, b) => [st.cx + a*hw*c - b*hh*sn, st.cy + a*hw*sn + b*hh*c];
+  return 'M' + [[-1,-1],[1,-1],[1,1],[-1,1]]
+    .map(([a, b]) => pt(a, b).map(v => v.toFixed(1)).join(',')).join('L') + 'Z';
+}
+
+/* Is the mask being taken at all? */
+function maskOpen() {
+  const row = document.getElementById('gmode');
+  return !!(grad && row && !row.hidden);
+}
+
+/* Cut the placed shapes out of the shading with their own coverage. */
+/* Which parts of the shading show, for regions of either kind. One mechanism,
+   not two: a drawn outline and a placed shape are only two ways of saying where
+   the region is, so both go into the same mask and the shading itself is always
+   the whole view. Deciding it in the path for one kind and in the mask for the
+   other left an inverted shape with an empty path and no shading at all. */
+function cutStamps(stamps, W, H, rings) {
+  const g = document.getElementById('gcutg');
+  const excl = document.getElementById('gexcl');
+  if (!g || !excl) return;
+  g.innerHTML = '';
+  const ringD = (rings || []).join('');
+  if (!stamps.length && !ringD) { excl.removeAttribute('mask'); return; }
+  const inv = !!(grad && grad.invert);
+  const back = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+  back.setAttribute('width', W);
+  back.setAttribute('height', H);
+  back.setAttribute('fill', inv ? '#000' : '#fff');
+  g.appendChild(back);
+  // a drawn region, the same way: white inside it when inverted, black when not
+  if (ringD) {
+    const pth = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    pth.setAttribute('d', ringD);
+    pth.setAttribute('fill', inv ? '#fff' : '#000');
+    g.appendChild(pth);
+  }
+  for (const st of stamps) {
+    const im = document.createElementNS('http://www.w3.org/2000/svg',
+      st.url ? 'image' : 'rect');
+    if (st.url) im.setAttribute('href', st.url);
+    else im.setAttribute('fill', inv ? '#fff' : '#000');
+    im.setAttribute('x', -st.fw/2);
+    im.setAttribute('y', -st.fh/2);
+    im.setAttribute('width', st.fw);
+    im.setAttribute('height', st.fh);
+    /* Stretched to fill the frame, as the mask and the outline both are. Left
+       to itself an image is fitted inside the box keeping its own shape, so
+       stretching a shape moved the outline and left the hole behind - and the
+       further it was stretched the wider the gap. */
+    if (st.url) im.setAttribute('preserveAspectRatio', 'none');
+    /* Reflected, not merely turned: a mirror negates the angle AND flips the
+       picture along x. With only the angle negated the hole came out rotated
+       while its dashed outline came out reflected - opposite to each other. */
+    im.setAttribute('transform', 'translate(' + st.cx + ',' + st.cy + ') rotate('
+      + (st.ang*180/Math.PI).toFixed(2) + ')' + (st.flip ? ' scale(-1,1)' : ''));
+    if (st.url) im.setAttribute('style',
+      'filter:brightness(0)' + (inv ? ' invert(1)' : ''));
+    g.appendChild(im);
+  }
+  excl.setAttribute('mask', 'url(#gcut)');
+}
+
 function drawMaskShape(polys) {
   const poly = document.getElementById('gpoly');
   const excl = document.getElementById('gexcl');
-  const list = (polys || []).filter(p => p && p.length >= 2);
-  if (!list.length) {
+  const k = maskScale(), W = cv.clientWidth, H = cv.clientHeight;
+  const all = 'M0,0H' + W + 'V' + H + 'H0Z';
+  /* Each region plus its reflection, handed to the same code that draws the
+     originals - so what is on screen while drawing or placing is what the
+     mirror will lay down. */
+  const given = polys || [];
+  const both = [...given];
+  if (mirror && mesh)
+    for (const r of given) {
+      const m2 = mirrorRegion(r, k, W, H);
+      if (m2) both.push(m2);
+    }
+  const list = both.filter(p => Array.isArray(p) && p.length >= 2);
+  // Anything carrying a frame is a shape, whether it has been committed yet or
+  // is still being placed. Testing for the committed-only field left the one
+  // under the cursor out of the shading entirely.
+  const stamps = both.filter(p => p && p.fw !== undefined);
+  if (!list.length && !stamps.length) {
+    cutStamps([], W, H, []);
     poly.setAttribute('d', '');
-    excl.setAttribute('d', '');
+    // Armed with nothing gathered yet: nothing is inside the mask, so the whole
+    // view is the excluded side. Showing nothing at all left no sign that the
+    // tool was waiting.
+    // Shown for the whole of mask mode. Tying it to the free-hand mode alone
+    // made the grey vanish the moment Shape was chosen.
+    excl.setAttribute('d', maskOpen() && !(grad && grad.invert) ? all : '');
     return;
   }
-  const k = maskScale(), W = cv.clientWidth, H = cv.clientHeight;
   // closed as it goes, because that is the region that will be filled
   const rings = list.map(pts => 'M' + pts
     .map(p => (p[0]/k*W).toFixed(1) + ',' + (p[1]/k*H).toFixed(1)).join('L') + 'Z');
-  poly.setAttribute('d', rings.join(''));
-  // with even-odd, the screen rectangle plus the rings shades everything outside
-  excl.setAttribute('d', grad && grad.invert
-    ? rings.join('')
-    : 'M0,0H' + W + 'V' + H + 'H0Z' + rings.join(''));
+  /* The shape's own edge, not its frame: a rectangle round it is the sizing
+     frame's job, and drawing one here made a shape look unlike a region drawn
+     by hand. */
+  poly.setAttribute('d', rings.join('') + stamps.map(st => stampEdge(st)).join(''));
+  /* Always the whole view. Which parts of it show is settled in the mask, for
+     both kinds of region at once - see cutStamps. */
+  excl.setAttribute('d', all);
+  cutStamps(stamps, W, H, rings);
+  // and a stamped shape carves its own coverage out of the shading, so what is
+  // greyed is exactly what will be left alone
 }
 
 /* Which handle, or the line itself, is under the pointer. */
@@ -3794,7 +5200,7 @@ function gradDrag(part, x, y) {
   const st = part.stop;
   if (st.t <= 1e-6 || st.t >= 1-1e-6) {
     const dpr = Math.min(devicePixelRatio || 1, 2);
-    const rr = screenRay(x*dpr, cv.height - y*dpr);
+    const rr = rayAt(x, y);
     const hit = raycast(rr.o, rr.d);
     let P;
     if (hit) {
@@ -3846,6 +5252,18 @@ function startGradient() {
 }
 function endGradient() {
   grad = null;
+  stopTarget = null;
+  // put the tool back to how it starts, or the next gradient opens with the
+  // mask row still showing and nothing armed behind it
+  maskShape = null;
+  maskMode = 'free';
+  gmaskArmed = false;
+  pads.mask.open(false);
+  document.getElementById('gmode').hidden = true;
+  document.getElementById('msbar').hidden = true;
+  document.getElementById('gmask').setAttribute('aria-pressed', 'false');
+  drawMaskFrame();
+  drawMaskShape([]);                    // and no outlines are left behind
   document.getElementById('gbar').hidden = true;
   document.getElementById('ginv').setAttribute('aria-pressed', 'false');
   gmaskArmed = false;
@@ -3873,18 +5291,64 @@ function commitMasks() {
   drawGrad();
   applyGradient();
 }
+/* The three ways of taking a mask. Shape borrows the slots from the pad, but
+   what it does with one is entirely the mask's business. */
+document.getElementById('gmode').addEventListener('click', e => {
+  const b = e.target.closest('button');
+  if (!b || !b.dataset.k) return;
+  maskMode = b.dataset.k;
+  for (const q of document.getElementById('gmode').children)
+    if (q.dataset.k) q.setAttribute('aria-pressed', String(q === b));
+  gmaskArmed = maskMode === 'free';
+  if (maskMode === 'shape') {
+    // the mask's own pad, not the one used for painting
+    pads.mask.open(true);
+  }
+  else {
+    // not taking shapes any more, so its pad goes with the mode
+    pads.mask.open(false);
+    if (maskShape) {
+      maskShape = null;
+      document.getElementById('msbar').hidden = true;
+    }
+  }
+  drawGrad();
+});
+document.getElementById('msApply').onclick = () => { keepMaskShape(); endMaskShape(); };
+document.getElementById('msCancel').onclick = () => endMaskShape();
+document.getElementById('msCopy').onclick = () => {
+  /* Keeps this one and stands the next copy ready, and lays nothing down - the
+     same as the tick. Applying here and not there made the tick look as though
+     it had done nothing, when in fact both only add to the list and the
+     gradient is worked out once, when the mask is finished. */
+  if (!keepMaskShape()) return;
+  maskShape = {...maskShape, placed: false};   // wait for the next click
+  drawGrad();
+  dirty = true;
+};
+
 document.getElementById('gmask').onclick = () => {
   if (!grad) return;
-  if (gmaskArmed) { commitMasks(); return; }  // finished drawing: lay them down
-  if (grad.masks.length) {                    // start over
-    grad.masks = [];
-    drawGrad();
-    applyGradient();
+  const row = document.getElementById('gmode');
+  if (!row.hidden) {                          // leaving mask mode
+    row.hidden = true;
+    gmaskArmed = false;
+    maskShape = null;
+    pads.mask.open(false);
+    document.getElementById('msbar').hidden = true;
+    document.getElementById('gmask').setAttribute('aria-pressed', 'false');
+    commitMasks();
     return;
   }
+  row.hidden = false;
+  maskMode = 'free';
   gmaskArmed = true;
   gradPending = true;
+  for (const q of document.getElementById('gmode').children)
+    if (q.dataset.k) q.setAttribute('aria-pressed', String(q.dataset.k === 'free'));
   document.getElementById('gmask').setAttribute('aria-pressed', 'true');
+  stackPanels();
+  drawGrad();               // shade the view at once, so the tool shows it is waiting
 };
 /* Invert only swaps which side is shaded. Like the shapes themselves it takes
    effect when the mask is finished, not on the press. */
@@ -3895,13 +5359,554 @@ document.getElementById('ginv').onclick = e => {
   gradPending = true;
   drawGrad();
 };
+/* Leaves the gradient without laying it down. */
+/* The same mirror the toolbar holds, reachable from here too. Two buttons, one
+   switch: a second flag of its own would be a second mirror to keep in step. */
+document.getElementById('gmir').onclick = () => {
+  document.getElementById('mirror').click();
+  syncMirrorButtons();
+};
+syncMirrorButtons();          // and they start out saying the same thing
+function syncMirrorButtons() {
+  const on = String(!!mirror);
+  for (const id of ['mirror', 'gmir']) {
+    const b = document.getElementById(id);
+    if (b) b.setAttribute('aria-pressed', on);
+  }
+}
+
+/* ---- metallic, an extension: remove this block to take it out ------------ */
+/* The settings are up only while the switch is on AND the colour panel is
+   open - the switch lives in that panel, so they go together. One place
+   decides it, called from wherever either of those can change. */
+/* Watches the picker rather than being called after every change to it. Six
+   separate calls had to be kept in step by hand, and the next place that opens
+   or closes the picker would have needed a seventh. */
+function metalRowWatch() {
+  /* Called from the draw the page already runs, not from a loop of its own:
+     asking for frames here starved the one that draws the garment. */
+  const pick = document.getElementById('pick');
+  if (!pick) return;
+  const now = metalOn + '/' + pick.hidden + '/' + pick.getAttribute('data-mode');
+  if (now === metalRowWas) return;
+  metalRowWas = now;
+  metalRowSync();
+}
+
+function metalRowSync() {
+  const row = document.getElementById('metalRow');
+  const pick = document.getElementById('pick');
+  if (!row || !pick) return;
+  /* Erasing borrows the same panel, and there is no colour to give a sheen -
+     so the settings go away with it. */
+  row.hidden = !metalOn || pick.hidden
+    || pick.getAttribute('data-mode') === 'erase';
+  if (row.hidden) return;
+  const r = pick.getBoundingClientRect();
+  row.style.left = Math.round(r.left) + 'px';
+  row.style.top = Math.round(r.bottom + 6) + 'px';
+  row.style.width = Math.round(r.width) + 'px';
+}
+
+document.getElementById('metalTool').onclick = e => {
+  metalOn = !metalOn;
+  e.currentTarget.setAttribute('aria-pressed', String(metalOn));
+  metalRowSync();
+  dirty = true;
+};
+
+for (const [id, key, show] of [
+  ['metalAngle', 'angle', v => Math.round(v*180/Math.PI) + '\u00b0'],
+  ['metalTight', 'tight', v => String(Math.round(v))],
+  ['metalDark',  'dark',  v => Math.round(v*100) + '%'],
+]) {
+  const sl = document.getElementById(id);
+  sl.oninput = e => {
+    const raw = +e.target.value;
+    metal[key] = key === 'angle' ? raw*Math.PI/180
+      : key === 'dark' ? raw/100 : raw;
+    document.getElementById(id + 'V').textContent = show(metal[key]);
+    dirty = true;
+  };
+}
+
+document.getElementById('gcancel').onclick = () => { endGradient(); };
+
 document.getElementById('gdone').onclick = () => {
+  /* A shape sitting on the garment is kept, not thrown away. Dropped instead,
+     the mask was left with nothing in it - and a gradient with no mask covers
+     the whole garment, which took the base colour with it. */
+  if (maskShape && maskShape.placed) keepMaskShape();
   if (gmaskArmed || gradPending) commitMasks();   // drawn shapes and invert land now
   endGradient();
-  const seg = document.getElementById('toolSeg');
-  const b = [...seg.children].find(x => x.dataset.t === 'brush');
-  if (b) b.click();
+  ctlState.bar.tool = 'brush';           // back to drawing once it is applied
+  ctlState.bar.erase = false;
+  ctlSync();
+  document.getElementById('gradTool').setAttribute('aria-pressed', 'false');
 };
+
+/* ---- stamping a shape onto the garment ---------------------------------
+   The frame, the handles and the drag are the photo's; only what is laid down
+   differs. It goes on through the screen, so it wraps over the surface and is
+   not stopped by a seam, and the colour comes from the toolbar rather than
+   from the shape. */
+let stampSrc = null, stampPiece = -1, stampSize = null;
+
+/* The shape currently under the frame, as a mask entry - so that placing one
+   lights up exactly as a drawn mask does, instead of painting onto the cloth
+   and only becoming a mask once it is committed. */
+
+
+
+function stampUniforms() {
+  if (!stampSrc || !mesh || !painter) return null;
+  const dpr = Math.min(devicePixelRatio || 1, 2);
+
+  // which piece the frame is over, and a mark on every vertex saying whether
+  // it belongs to that piece
+  const H = cv.height;
+  const r = rayAt(photo.cx, photo.cy);
+  const hit = raycast(r.o, r.d);
+  if (hit) {
+    const G = rayGrid, k3 = hit.tri*3;
+    if (G.NM[k3]*r.d[0] + G.NM[k3+1]*r.d[1] + G.NM[k3+2]*r.d[2] <= -0.05) {
+      const PC = pieces || buildPieces();
+      const pc = PC.of[G.VI[k3]];
+      if (pc !== stampPiece) {
+        stampPiece = pc;
+        let base = 0;
+        painter.setLayout(mesh.parts.map(p => {
+          const nv = p.position.length/3, out = new Float32Array(nv*2);
+          for (let i = 0; i < nv; i++)
+            if (PC.of[base+i] !== pc) { out[i*2] = 9; out[i*2+1] = 9; }
+          base += nv;
+          return out;
+        }));
+      }
+    }
+  }
+
+  const ca = Math.cos(photo.ang), sa = Math.sin(photo.ang);
+  const hw = Math.max(photo.fw/2*dpr, 1), hh = Math.max(photo.fh/2*dpr, 1);
+  // screen point -> the shape's own square, so the shader can look it up
+  const m = new Float32Array([ ca/hw, -sa/hh, -sa/hw, -ca/hh]);
+  return {c: [photo.cx*dpr, cv.height - photo.cy*dpr], m};
+}
+
+/* The run of stamping, from picking a shape to finishing with it:
+
+     pick a slot -> waiting          nothing on the garment yet
+     click        -> placing         the frame appears where you clicked
+     adjust                          size, angle, position
+     copy         -> waiting         this one is laid down, the next awaits a click
+     tick         -> done            laid down, and the run ends
+     cross        -> done            discarded, and the run ends
+
+   The tick and the cross end it whenever they are pressed, so the bar stays up
+   for the whole run rather than only while a frame is on screen. */
+function startStamp(src) {
+  if (!mesh || !painter) return;
+  // never onto the cloth while the mask is open
+  const row = document.getElementById('gmode');
+  if (grad && row && !row.hidden) return;
+  stampSrc = src;
+  stampPiece = -1;
+  stampSize = null;
+  painter.setStamp(src);
+  photo = null;                                // nothing until you click
+  showStampBar();
+  stackPanels();
+  dirty = true;
+}
+
+/* Put the frame where the pointer went down. */
+function dropStampFrame(x, y) {
+  if (!stampSrc || photo) return false;
+  const fit = Math.min(cv.clientWidth, cv.clientHeight)*0.22;
+  photo = {tex: null, bmp: null, cx: x, cy: y,
+           fw: stampSize ? stampSize.fw : fit,
+           fh: stampSize ? stampSize.fh : fit,
+           ang: stampSize ? stampSize.ang : 0,
+           last: null, anchor: null, isStamp: true};
+  stampPiece = -1;
+  previewPhoto();
+  dirty = true;
+  return true;
+}
+
+/* Lay the frame's contents into the paint layer. */
+function commitStamp() {
+  const u = photo && stampUniforms();
+  if (!u) return false;
+  stampSize = {fw: photo.fw, fh: photo.fh, ang: photo.ang};
+  /* A shape carries the colours it was drawn in, so the stroke is begun the way
+     a photo's is. Begun as an ordinary one, the compositing step reached for
+     the toolbar's colour instead and the shape changed colour the moment it was
+     put down. */
+  painter.beginStroke(camera(), colour, strokeFlow(), erase, true);
+  painter.stamp(0, 0, 0, 1, 1, {stamp: u});
+  painter.endStroke();
+  refreshUndo();
+  return true;
+}
+
+function copyStamp() {                          // lay it down, wait for the next
+  commitStamp();
+  photo = null;
+  painter.clearStroke();
+  showStampBar();
+  dirty = true;
+}
+
+function placeStamp() { commitStamp(); endStamp(); }
+
+function endStamp() {
+  stampSrc = null;
+  stampSize = null;
+  photo = null;
+  if (painter) painter.clearStroke();
+  document.getElementById('stbar').hidden = true;
+  drawGizmo();
+  stackPanels();
+  dirty = true;
+}
+
+/* The bar sits under the frame while one is up, and parks by the pad while the
+   next click is awaited - so the tick and the cross are always reachable. */
+function showStampBar() {
+  const bar = document.getElementById('stbar');
+  if (!stampSrc) { bar.hidden = true; return; }
+  bar.hidden = false;
+  if (photo) { drawGizmo(); return; }
+  const shown = pads.mask.host.hidden ? pads.paint : pads.mask;
+  const pw = shown.host.getBoundingClientRect();
+  bar.style.left = Math.round(pw.left + pw.width/2) + 'px';
+  bar.style.top = Math.round(Math.max(4, pw.top - 44)) + 'px';
+}
+
+/* ---- shape pads ---------------------------------------------------------
+   A small board for drawing a motif, and there are two of them: one whose
+   shapes are stamped onto the cloth, and one whose shapes cut holes in a
+   gradient's mask. They share every bit of behaviour and share nothing else -
+   their own board, their own five slots, their own tool and colour - so
+   drawing for one cannot disturb the other.
+
+   The mask's board only ever draws white: a hole has no colour, and only the
+   coverage is ever read from it. */
+const PAD_N = 256, SLOTS = 5;
+const padStep = Math.max(2, PAD_N*0.012);   // the walk's spacing, not the dab
+
+function makePad(who, white) {
+  const host = document.getElementById(who + '-wrap');
+  const cv2 = document.getElementById(who + '-cv');
+  const ctx = cv2.getContext('2d', {willReadFrequently: true});
+
+  // what is finished, and the stroke in progress laid at full strength
+  const base = document.createElement('canvas');
+  base.width = base.height = PAD_N;
+  const baseCtx = base.getContext('2d', {willReadFrequently: true});
+  const work = document.createElement('canvas');
+  work.width = work.height = PAD_N;
+  const workCtx = work.getContext('2d', {willReadFrequently: true});
+
+  const st = () => ctlState[who];
+  const P = {
+    who, white, host, cv: cv2, ctx, base, baseCtx, work, workCtx,
+    slots: Array(SLOTS).fill(null), sel: -1, inked: false,
+  };
+
+  P.ink = (q) => {
+    if (white) return '#fff';
+    let c = st().colour;
+    /* the metallic extension: the same sheen the garment gets, measured across
+       the pad instead of across the cloth - the colour and the rule are shared,
+       only the place they are measured at differs. */
+    if (metalOn && q) {
+      const a = metal.angle;
+      const u = (q[0]/PAD_N - 0.5)*Math.sin(a) + (q[1]/PAD_N - 0.5)*Math.cos(a);
+      c = metalInk(c, metalSheen(u*2));
+    }
+    const b = v => Math.round(Math.max(0, Math.min(1, v))*255);
+    return 'rgb(' + b(c[0]) + ',' + b(c[1]) + ',' + b(c[2]) + ')';
+  };
+  P.radius = () =>
+    Math.max(1.5, PAD_N*0.012 + PAD_N*0.055*(st().size/100));
+  P.tool = () => (st().erase ? 'erase' : st().tool);
+
+  /* The stroke is laid on the scratch layer at full strength and folded in
+     once, so overlaps inside one stroke do not pile up and darken. */
+  P.fold = into => {
+    const s2 = st();
+    into.save();
+    into.globalAlpha = Math.max(0.02, s2.erase ? s2.eraseFlow : s2.flow);
+    if (P.tool() === 'erase') into.globalCompositeOperation = 'destination-out';
+    into.drawImage(work, 0, 0);
+    into.restore();
+  };
+  P.dab = (q, ctx2) => {
+    const g = ctx2 || workCtx;
+    g.save();
+    g.fillStyle = P.ink(q);        // the metallic extension: where it lands
+    g.beginPath();
+    g.arc(q[0], q[1], P.radius(), 0, 7);
+    g.fill();
+    g.restore();
+  };
+  P.show = () => {
+    ctx.clearRect(0, 0, PAD_N, PAD_N);
+    ctx.drawImage(base, 0, 0);
+  };
+  P.reset = () => {
+    baseCtx.clearRect(0, 0, PAD_N, PAD_N);
+    workCtx.clearRect(0, 0, PAD_N, PAD_N);
+    P.inked = false;
+    P.stroke.cancel();
+    ctx.clearRect(0, 0, PAD_N, PAD_N);
+  };
+  P.empty = () => !P.inked;
+
+  P.stroke = makeStroker({
+    tool: () => P.tool(),
+    erasing: () => st().erase,
+    smooth: () => st().smooth,
+    get step() { return Math.max(1.5, P.radius()*0.4); },
+    jitter: 3,
+    live: false,
+    dab: q => P.dab(q, workCtx),
+    redraw(state) {
+      P.show();
+      if (state.line) {
+        // a dashed guide while dragging, as on the garment
+        ctx.save();
+        ctx.strokeStyle = P.ink(state.line[0]);   // the metallic extension
+        ctx.lineWidth = 2;
+        ctx.setLineDash([8, 8]);
+        ctx.beginPath();
+        ctx.moveTo(state.line[0][0], state.line[0][1]);
+        ctx.lineTo(state.line[1][0], state.line[1][1]);
+        ctx.stroke();
+        ctx.restore();
+      } else if (state.pts) {
+        workCtx.clearRect(0, 0, PAD_N, PAD_N);
+        for (const q of state.pts) P.dab(q, workCtx);
+        P.fold(ctx);
+      }
+    },
+    done() {
+      P.fold(baseCtx);
+      workCtx.clearRect(0, 0, PAD_N, PAD_N);
+      P.inked = true;
+      P.show();
+    },
+    fill(q) {
+      const img = baseCtx.getImageData(0, 0, PAD_N, PAD_N);
+      const d = img.data;
+      const i0 = Math.round(q[1])*PAD_N + Math.round(q[0]);
+      /* Any ink at all stops the spread: a line at one per cent is still a
+         line. */
+      if (i0 < 0 || i0 >= PAD_N*PAD_N || d[i0*4+3] > 0) return;
+      /* Hardened on a working copy, which decides where the fill stops; the
+         board itself is written only where the fill lands, so the far side of
+         a stroke is left exactly as it was drawn. */
+      const N2 = PAD_N;
+      const solid = new Uint8Array(N2*N2);
+      for (let y = 0; y < N2; y++) for (let x = 0; x < N2; x++) {
+        const i = y*N2 + x, al = d[i*4+3];
+        if (!al) continue;
+        let top = 0;
+        for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) {
+          const nx = x+dx, ny = y+dy;
+          if (nx < 0 || ny < 0 || nx >= N2 || ny >= N2) continue;
+          const v = d[(ny*N2 + nx)*4 + 3];
+          if (v > top) top = v;
+        }
+        solid[i] = al > top*0.5 ? 1 : 0;
+      }
+      if (solid[i0]) return;
+
+      const out = new Uint8Array(N2*N2);
+      {
+        const q = [i0];
+        out[i0] = 1;
+        while (q.length) {
+          const i = q.pop(), x = i % N2, y = (i/N2)|0;
+          for (const [dx, dy] of [[1,0],[-1,0],[0,1],[0,-1]]) {
+            const nx = x+dx, ny = y+dy;
+            if (nx < 0 || ny < 0 || nx >= N2 || ny >= N2) continue;
+            const j = ny*N2 + nx;
+            if (out[j] || solid[j]) continue;
+            out[j] = 1;
+            q.push(j);
+          }
+        }
+      }
+
+      /* the metallic extension: shaded across the region, as it is on the
+         garment - one flat colour would make a metallic fill look painted. */
+      const inkAt = i => {
+        const cm = /rgb\((\d+),(\d+),(\d+)\)/.exec(
+          P.ink([i % N2, (i/N2)|0]));
+        return cm ? [+cm[1], +cm[2], +cm[3]] : [255, 255, 255];
+      };
+      const [cr, cg, cb] = inkAt(i0);
+      const ca = Math.round(Math.max(0.02, st().flow)*255);
+      for (let i = 0; i < out.length; i++) {
+        if (!out[i]) continue;
+        // the metallic extension: shaded cell by cell, or a metallic fill
+        // would come out one flat colour
+        const [r2, g2, b2] = metalOn ? inkAt(i) : [cr, cg, cb];
+        d[i*4] = r2; d[i*4+1] = g2; d[i*4+2] = b2; d[i*4+3] = ca;
+      }
+
+      /* Both sides of the join take a share of the other, so the step between
+         them becomes a ramp. A cell with nothing on the far side is left alone,
+         which is every part of a stroke the fill never reached. */
+      {
+        const was = new Uint8ClampedArray(d);
+        for (let y = 1; y < N2-1; y++) for (let x = 1; x < N2-1; x++) {
+          const i = y*N2 + x;
+          const mine = out[i] ? 1 : (solid[i] ? 2 : 0);
+          if (!mine) continue;
+          let n = 0, edge = 0, er = 0, eg = 0, eb = 0, ea = 0;
+          for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+            const j = (y+dy)*N2 + (x+dx);
+            n++;
+            const theirs = out[j] ? 1 : (solid[j] ? 2 : 0);
+            if (!theirs || theirs === mine) continue;
+            edge++;
+            er += was[j*4]; eg += was[j*4+1]; eb += was[j*4+2]; ea += was[j*4+3];
+          }
+          if (!edge) continue;
+          const w = edge/n;
+          d[i*4]   = Math.round(was[i*4]  *(1-w) + (er/edge)*w);
+          d[i*4+1] = Math.round(was[i*4+1]*(1-w) + (eg/edge)*w);
+          d[i*4+2] = Math.round(was[i*4+2]*(1-w) + (eb/edge)*w);
+          d[i*4+3] = Math.round(was[i*4+3]*(1-w) + (ea/edge)*w);
+        }
+      }
+
+      baseCtx.putImageData(img, 0, 0);
+      P.inked = true;
+      P.show();
+      return;
+
+    },
+    ring(at, f) {
+      P.show();
+      workCtx.clearRect(0, 0, PAD_N, PAD_N);
+      for (const q of (P.stroke.points || [])) P.dab(q, workCtx);
+      P.fold(ctx);
+      const r = PAD_N*0.055;
+      ctx.strokeStyle = 'rgba(11,16,23,0.5)';
+      ctx.lineWidth = PAD_N*0.016;
+      ctx.beginPath();
+      ctx.arc(at[0], at[1], r, 0, 7);
+      ctx.stroke();
+      ctx.strokeStyle = '#6FA8CE';
+      ctx.lineWidth = PAD_N*0.013;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.arc(at[0], at[1], r, -Math.PI/2, -Math.PI/2 + f*Math.PI*2);
+      ctx.stroke();
+    },
+  });
+
+  const at = e => {
+    const r = cv2.getBoundingClientRect();
+    return [(e.clientX - r.left)/r.width*PAD_N,
+            (e.clientY - r.top)/r.height*PAD_N];
+  };
+  cv2.addEventListener('pointerdown', e => {
+    e.preventDefault(); e.stopPropagation();
+    cv2.setPointerCapture(e.pointerId);
+    P.stroke.begin(at(e), 1);
+  });
+  cv2.addEventListener('pointermove', e => {
+    if (cv2.hasPointerCapture(e.pointerId)) P.stroke.move(at(e), 1);
+  });
+  for (const k of ['pointerup', 'pointercancel', 'lostpointercapture'])
+    cv2.addEventListener(k, () => P.stroke.end(1));
+
+  /* The five slots, drawn as they were painted. */
+  P.drawSlots = () => {
+    const h2 = document.getElementById(who + '-slots');
+    if (h2.childElementCount !== SLOTS) {
+      h2.innerHTML = '';
+      for (let i = 0; i < SLOTS; i++) {
+        const b = document.createElement('button');
+        b.className = 'slot empty';
+        b.type = 'button';
+        b.dataset.slot = String(i);
+        b.setAttribute('aria-pressed', 'false');
+        b.setAttribute('aria-label', 'Shape ' + (i+1));
+        b.appendChild(document.createElement('canvas'));
+        h2.appendChild(b);
+      }
+    }
+    for (let i = 0; i < SLOTS; i++) {
+      const b = h2.children[i], c = b.firstElementChild;
+      c.width = c.height = 44;
+      const g = c.getContext('2d');
+      g.clearRect(0, 0, 44, 44);
+      if (P.slots[i]) g.drawImage(P.slots[i], 0, 0, 44, 44);
+      b.classList.toggle('empty', !P.slots[i]);
+      b.setAttribute('aria-pressed', String(i === P.sel));
+    }
+  };
+
+  P.save = () => {
+    if (P.empty()) { refuse(who + '-save'); return; }
+    /* The next one along, so editing a shape and saving leaves the original
+       standing and puts the new one beside it. */
+    let i = P.slots.indexOf(null, P.sel >= 0 ? P.sel + 1 : 0);
+    if (i < 0) i = P.slots.indexOf(null);
+    if (i < 0) i = P.sel >= 0 ? (P.sel + 1) % SLOTS : 0;
+    const c = document.createElement('canvas');
+    c.width = c.height = PAD_N;
+    c.getContext('2d').drawImage(base, 0, 0);
+    P.slots[i] = c;
+    P.sel = -1;                    // kept, not chosen
+    P.reset();
+    P.drawSlots();
+  };
+
+  P.pick = i => {
+    P.sel = i;
+    P.drawSlots();
+    if (!P.slots[i]) return null;
+    // back onto the board so it can be worked on
+    baseCtx.clearRect(0, 0, PAD_N, PAD_N);
+    baseCtx.drawImage(P.slots[i], 0, 0);
+    P.inked = true;
+    P.stroke.cancel();
+    P.show();
+    if (host.hidden) { host.hidden = false; stackPanels(); }
+    return P.slots[i];
+  };
+
+  document.getElementById(who + '-clear').onclick = () => P.reset();
+  document.getElementById(who + '-save').onclick = () => P.save();
+  document.getElementById(who + '-done').onclick = () => {
+    host.hidden = true;
+    stackPanels();
+  };
+  document.getElementById(who + '-slots').addEventListener('click', e => {
+    const b = e.target.closest('.slot');
+    if (!b) return;
+    const src = P.pick(+b.dataset.slot);
+    if (src) P.use(src);
+  });
+
+  P.open = on => {
+    host.hidden = on === undefined ? !host.hidden : !on;
+    stackPanels();
+  };
+
+  P.use = () => {};              // set by whoever owns this pad
+  P.drawSlots();
+  P.reset();
+  return P;
+}
 
 document.getElementById('impObj').onclick = () => document.getElementById('ofile').click();
 document.getElementById('ofile').onchange = e => {
@@ -3922,6 +5927,254 @@ addEventListener('drop', e => {
   e.preventDefault(); dz.classList.remove('on');
   importFiles(e.dataTransfer.files);
 });
+
+
+/* ---- the drawing controls ------------------------------------------------
+   Colour, erase, draw, line, fill, smooth and size, as one block. It is put
+   wherever drawing happens - the toolbar and the shape pad - so the two cannot
+   drift apart. Each copy carries its own tool and erase; colour, smooth and
+   size are one setting shared between them.
+
+   Wired by delegation rather than by id, because the same markup appears more
+   than once and ids may not. */
+/* One panel, put up twice: one for drawing shapes to paint with, one for
+   drawing the shapes a mask is cut from. They share every line of behaviour
+   below and none of their state, so what is drawn on one never appears on the
+   other. The mask's has no colour at all - a hole has none. */
+function padMarkup(who, white) {
+  const id = n => who + '-' + n;
+  return '<div class="pad" id="' + id('wrap') + '" hidden>'
+    + '<i class="grip" data-drag="' + id('wrap') + '"></i>'
+    + '<canvas id="' + id('cv') + '" width="256" height="256"></canvas>'
+    + '<div id="' + id('ctl') + '"></div>'
+    + '<div class="padrow">'
+    +   '<button class="tb ic" id="' + id('clear') + '" data-i="clear"'
+    +     ' title="Clear the pad" aria-label="Clear the pad"></button>'
+    +   '<button class="tb ic" id="' + id('save') + '" data-i="save"'
+    +     ' title="Keep in a slot" aria-label="Keep in a slot"></button>'
+    +   '<button class="tb ic" id="' + id('done') + '" data-i="cancel"'
+    +     ' title="Close" aria-label="Close"></button>'
+    +   (white ? '' : '<button class="tb swb" data-ctl-colour="' + who
+    +     '" aria-label="Colour"><i></i></button>')
+    + '</div>'
+    + '<div class="slots" id="' + id('slots') + '"></div>'
+    + '</div>';
+}
+
+function controlsMarkup(where) {
+  const b = (k, icon, label, on) =>
+    '<button class="tb ic" data-ct="' + k + '" data-i="' + icon + '" '
+    + 'aria-pressed="' + (on ? 'true' : 'false') + '" title="' + label + '" '
+    + 'aria-label="' + label + '"></button>';
+  return '<div class="ctl" data-for="' + where + '">'
+    + '<div class="row">'
+    +   '<div class="seg icons">'
+    +     b('brush', 'brush', 'Draw', true) + b('line', 'line', 'Line')
+    +     b('fill', 'fill', 'Fill')
+    +   '</div>'
+    +   b('erase', 'erase', 'Erase')
+    + '</div>'
+    + '<div class="row"><label class="sl" title="Hold still to smooth">'
+    +   '<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path'
+    +   ' d="M2 12c3 0 3-8 6-8s3 8 6 8" fill="none" stroke="currentColor"'
+    +   ' stroke-width="1.4" stroke-linecap="round"/></svg>'
+    +   '<input type="range" data-ct="smooth" min="0" max="100" step="5" value="0">'
+    +   '<b data-ct="smoothV"></b></label></div>'
+    + '<div class="row"><label class="sl" title="Brush size">'
+    +   '<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path'
+    +   ' d="M2.5 11.5a2.5 2.5 0 1 0 0-.1z M9.5 6a4.5 4.5 0 1 0 0-.1z" fill="none"'
+    +   ' stroke="currentColor" stroke-width="1.4"/></svg>'
+    +   '<input type="range" data-ct="size" min="0" max="100" step="1" value="45">'
+    +   '<b data-ct="sizeV"></b></label></div>'
+    + '</div>';
+}
+
+/* ---- icons -------------------------------------------------------------
+   Drawn here rather than written into the markup, so the toolbar stays short
+   and every button is the same size. 16x16, stroke only, currentColor. */
+const ICONS = {
+  paint:  'M3 13l4-1 6-6-3-3-6 6-1 4z M10 3l3 3',
+  move:   'M8 2v12 M2 8h12 M8 2L6 4 M8 2l2 2 M8 14l-2-2 M8 14l2-2 M2 8l2-2 M2 8l2 2 M14 8l-2-2 M14 8l-2 2',
+  brush:  'M4 12c0-2 1-3 3-3l4-5 2 2-5 4c0 2-1 3-3 3H3l1-1z',
+  line:   'M3 13L13 3 M3 13h0 M13 3h0',
+  fill:   'M6 3l5 5-5 5-5-5 5-5z M11 8l2 3a1.6 1.6 0 1 1-3.2 0L11 8z',
+  grad:   'M2.5 3.5h11v9h-11z M4.5 11.5h7 M5.5 9.5h5 M6.5 7.5h3',
+  erase:  'M4 12l-2-2 7-7 4 4-5 5H4z M2 14h12',
+  soft:   'M8 3.5a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9z M8 1.5v1 M8 13.5v1 M1.5 8h1 M13.5 8h1',
+  mirror: 'M8 2v12 M6 5L2.5 8 6 11z M10 5l3.5 3L10 11z',
+  size:   'M2 11a3 3 0 1 0 0-.1z M9 6.5a5 5 0 1 0 0-.1z',
+  undo:   'M6 5H3.5V2.5 M3.5 5a6 6 0 1 1 0 6',
+  redo:   'M10 5h2.5V2.5 M12.5 5a6 6 0 1 0 0 6',
+  clear:  'M3 4.5h10 M5.5 4.5V3h5v1.5 M4.5 4.5l.7 9h5.6l.7-9',
+  reset:  'M8 2.5v11 M2.5 8h11 M8 4.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7z',
+  impObj: 'M8 1.8l5 2.6v6.2L8 13.2 3 10.6V4.4l5-2.6z M3 4.4l5 2.6 5-2.6 M8 7v6.2',
+  impTex: 'M2.5 3.5h11v9h-11z M2.5 10l3-3 2.5 2.5L11 6l2.5 2.5 M5.5 6.2a.8.8 0 1 0 0-.1z',
+  photo:  'M2.5 4.5h3l1-1.5h3l1 1.5h3v8h-11z M8 6.2a2.6 2.6 0 1 0 0 5.2 2.6 2.6 0 0 0 0-5.2z',
+  save:   'M8 2.5v7 M5 6.8L8 9.8l3-3 M2.5 11.5v2h11v-2',
+  mask:   'M2.5 2.5h11v11h-11z M5 5.5h6v5H5z',
+  invert: 'M8 2.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11z M8 2.5v11',
+  /* The three ways of taking a mask, all shown as the same circle so they read
+     as one idea: drawn by hand, cut by a shape, or turned inside out. */
+  maskDraw:   {d: 'M4.2 11.6l.6-2.4 5-5 1.8 1.8-5 5z',
+               fill: 'M9.8 4.2l1.8 1.8 1.3-1.3-1.8-1.8z'},
+  maskShape:  {fill: 'M8 3.4l1.6 3.3 3.6.5-2.6 2.5.6 3.6L8 11.6 4.8 13.3l.6-3.6'
+                   + '-2.6-2.5 3.6-.5z'},
+  maskInvert: {fill: 'M8 2.6a5.4 5.4 0 0 0 0 10.8z'},
+  done:   'M3 8.5l3.5 3.5L13 4.5',
+  cancel: 'M4 4l8 8 M12 4l-8 8',
+  copy:   'M5.5 5.5h8v8h-8z M2.5 10.5v-8h8',
+  shapes: 'M8 1.6l2 4.4 4.4.4-3.4 3 1.1 4.4L8 11.4 3.9 13.8 5 9.4 1.6 6.4 6 6z',
+};
+for (const [host, where] of [['barCtl', 'bar'], ['padCtl', 'pad']]) {
+  const el = document.getElementById(host);
+  if (el) el.innerHTML = controlsMarkup(where);
+}
+
+/* One handler for every copy of the controls. Tool and erase belong to the
+   copy that was pressed; colour, smooth and size are one setting, so pressing
+   either copy moves both. */
+/* Gradient is not one of the shared controls: it acts on the garment only, so
+   it keeps its own button beside them. */
+document.getElementById('gradTool').onclick = () => {
+  if (!mesh) return;
+  setMode('paint');
+  if (grad) { endGradient(); return; }
+  ctlState.bar.erase = false;
+  ctlSync();
+  startGradient();
+  document.getElementById('gradTool').setAttribute('aria-pressed', 'true');
+};
+
+/* Two instances, and nothing is shared between them. The toolbar's values are
+   the garment's; the pad keeps its own. Syncing the two meant changing the
+   colour for one changed it for the other, which is not what a separate set of
+   controls should do. */
+
+function ctlAll(sel) { return [...document.querySelectorAll(sel)]; }
+
+function ctlSync() {
+  for (const c of ctlAll('.ctl [data-ct]')) {
+    const host = c.closest('.ctl'), who = host && host.dataset.for;
+    if (!who) continue;
+    const st = ctlState[who];
+    const k = c.dataset.ct;
+    if (k === 'brush' || k === 'line' || k === 'fill')
+      c.setAttribute('aria-pressed', String(st.tool === k && !st.erase));
+    else if (k === 'erase') c.setAttribute('aria-pressed', String(st.erase));
+
+    else if (k === 'smooth') c.value = String(Math.round(st.smooth*100));
+    else if (k === 'smoothV') c.textContent = Math.round(st.smooth*100) + '%';
+    else if (k === 'size') c.value = String(st.size);
+    else if (k === 'sizeV') c.textContent = who === 'bar'
+      ? radius.toFixed(1) + ' cm' : Math.round(st.size) + '%';
+  }
+  /* The garment's settings are read through these; each pad reads its own
+     directly, so nothing is copied out for them. */
+  tool = ctlState.bar.tool;
+  erase = ctlState.bar.erase;
+  colour = ctlState.bar.colour;
+  flow = ctlState.bar.flow;
+  smoothAmt = ctlState.bar.smooth;
+  for (const sw of ctlAll('[data-ctl-colour]')) {
+    const own = ctlState[sw.dataset.ctlColour];
+    if (own && sw.firstElementChild)
+      sw.firstElementChild.style.background = toHex(own.colour);
+  }
+}
+
+let sizeVal = 45;
+/* The colour lives beside the other panel buttons rather than in the block, so
+   it is wired on its own. */
+for (const sw of ctlAll('[data-ctl-colour]'))
+  sw.addEventListener('click', e => {
+    e.stopPropagation();
+    ctlWho = sw.dataset.ctlColour;
+    /* Reaching for the colour means you want a colour. With erasing still on,
+       the picker went on offering nothing but its strength. */
+    ctlState[ctlWho].erase = false;
+    ctlSync();
+    openPickerFor(sw);
+  });
+
+for (const host of ctlAll('.ctl')) {
+  host.addEventListener('click', e => {
+    const b = e.target.closest('[data-ct]');
+    if (!b || b.tagName === 'INPUT') return;
+    const who = host.dataset.for, st = ctlState[who], k = b.dataset.ct;
+    if (k === 'colour') {
+      ctlWho = who;
+      openPickerFor(b);
+      return;
+    }
+    if (k === 'erase') {
+      st.erase = !st.erase;
+      ctlWho = who;
+      // Erasing has nothing to choose but how much to take away, so the picker
+      // comes up showing only that.
+      // Erasing has only its strength to choose, on either set of controls -
+      // the pad had no way to reach it at all.
+      stopTarget = null;
+      pickerFor(st.erase ? 'erase' : 'brush');
+      if (st.erase) openPickerFor(b);
+    }
+    else if (k === 'brush' || k === 'line' || k === 'fill') {
+      // choosing a tool leaves erasing, since erasing is not one of them, and
+      // the strength panel goes with it
+      const wasErasing = st.erase;
+      st.tool = k;
+      st.erase = false;
+      if (wasErasing && pick.getAttribute('data-mode') === 'erase') {
+        pick.hidden = true;
+        swatch.setAttribute('aria-expanded', 'false');
+      }
+    }
+    else return;
+    if (who === 'bar') { setMode('paint'); if (grad) endGradient(); }
+    ctlSync();
+  });
+  host.addEventListener('input', e => {
+    const who = host.dataset.for, st = ctlState[who], k = e.target.dataset.ct;
+    // into this copy's own state; writing to the globals meant the sync below
+    // immediately put them back to whatever the other copy held
+    if (k === 'smooth') st.smooth = +e.target.value/100;
+    else if (k === 'size') {
+      st.size = +e.target.value;
+      if (who === 'bar') radius = sliderRadius(st.size);
+    }
+    else return;
+    ctlSync();
+  });
+}
+
+/* Built after the markup and the icons exist. Each is told what a shape from it
+   is for; nothing else about them differs. */
+const pads = {paint: makePad('paint', false), mask: makePad('mask', true)};
+pads.paint.use = src => startStamp(src);
+pads.mask.use = src => startMaskShape(src);
+padTick = () => { pads.paint.stroke.tick(); pads.mask.stroke.tick(); };
+
+document.getElementById('padOpen').onclick = () => pads.paint.open();
+
+
+for (const b of document.querySelectorAll('[data-i]')) {
+  const ic = ICONS[b.dataset.i];
+  if (!ic) continue;
+  // an icon is either a stroked outline or an outline with a solid part
+  const d = typeof ic === 'string' ? ic : ic.d;   // may be absent
+  const solid = typeof ic === 'string' ? '' : ic.fill;
+  /* Every icon is a ring with its mark inside, so the whole set reads as one
+     family. The ring is drawn here rather than in each path, and the mark is
+     shrunk to sit within it. */
+  b.insertAdjacentHTML('afterbegin',
+    '<svg viewBox="0 0 16 16" width="22" height="22" aria-hidden="true">'
+    + '<circle cx="8" cy="8" r="7" fill="none" stroke="currentColor"'
+    + ' stroke-width="1.1" opacity="0.5"/>'
+    + '<g transform="translate(8,8) scale(0.78) translate(-8,-8)">'
+    + (d ? '<path d="' + d + '" fill="none" stroke="currentColor"'
+         + ' stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"/>' : '')
+    + (solid ? '<path d="' + solid + '" fill="currentColor"/>' : '')
+    + '</g></svg>');
+}
 
 setMode('paint');
 drawRecent();
