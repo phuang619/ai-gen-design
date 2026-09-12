@@ -366,6 +366,73 @@ let metalRowWas = null;   // what the panel was last told to do
 /* The sheen at one point along the light, as a fraction from 0 to 1. The one
    rule both surfaces use: the garment feeds it a place on the cloth, the pad
    feeds it a place on its own square. Only the coordinate differs. */
+/* Which cells a fill reaches, on a square grid of side n. One thing decides it:
+   whether the aliasing step called a cell solid. Every cell it called bare is
+   reached, residual ink and all - those faint cells are the edge of the line,
+   and leaving them out is a ring of bare cloth around everything filled.
+   Which cells count as wall is settled before this runs, not here.
+   The garment and the pad both ask this, so they cannot drift apart. */
+/* Which cells a fill may not enter: any that hold ink at all. Judging a faint
+   cell against its neighbours cannot work - a cell of 70 beside one of 255 is
+   either the soft edge of the strong line or a faint line of its own, and
+   nothing local tells them apart. Weighing it lost every faint line that ran
+   beside a strong one, and the fill escaped through the holes. */
+function aliasWall(n, alphaAt) {
+  const solid = new Uint8Array(n*n);
+  for (let i = 0; i < n*n; i++) solid[i] = alphaAt(i) ? 1 : 0;
+  return solid;
+}
+
+/* The cells where the fill meets ink, and how much of each one the ink really
+   held. They are the line's soft edge: part covered, so bare cloth shows
+   through them as a pale ring around everything filled.
+   Each is taken to full strength here, which leaves a hard jagged edge between
+   two solid colours - and the share it used to hold is handed back, so one
+   later pass can put exactly that much of each colour into it. Mixing as we go
+   instead, and then softening on top, blended the same boundary twice and
+   spread it over several cells, which is what reads as a ring.
+   Only cells the fill touches are settled, so the far side of a line is left
+   exactly as it was drawn. */
+function settleRim(n, out, alphaAt, harden) {
+  /* Until nothing moves, since a cell settled this way can bring the next one
+     into reach. */
+  const done = new Uint8Array(n*n);
+  const share = new Float32Array(n*n);   // how much of it the ink held
+  for (;;) {
+    const rim = [];
+    for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) {
+      const i = y*n + x, a = alphaAt(i);
+      if (done[i] || out[i] || !a || a === 255) continue;
+      for (const [dx, dy] of [[1,0],[-1,0],[0,1],[0,-1]]) {
+        const nx = x+dx, ny = y+dy;
+        if (nx < 0 || ny < 0 || nx >= n || ny >= n) continue;
+        if (out[ny*n + nx]) { rim.push(i); break; }
+      }
+    }
+    if (!rim.length) break;
+    for (const i of rim) { done[i] = 1; share[i] = alphaAt(i)/255; harden(i); }
+  }
+  return share;
+}
+
+function fillRegion(n, seeds, solid) {
+  const out = new Uint8Array(n*n);
+  const q = [];
+  for (const i of seeds) { if (!solid[i]) { out[i] = 1; q.push(i); } }
+  while (q.length) {
+    const i = q.pop(), x = i % n, y = (i/n)|0;
+    for (const [dx, dy] of [[1,0],[-1,0],[0,1],[0,-1]]) {
+      const nx = x+dx, ny = y+dy;
+      if (nx < 0 || ny < 0 || nx >= n || ny >= n) continue;
+      const j = ny*n + nx;
+      if (out[j] || solid[j]) continue;
+      out[j] = 1;
+      q.push(j);
+    }
+  }
+  return out;
+}
+
 function metalSheen(t) {
   return Math.exp(-t*t*metal.tight*0.35);
 }
@@ -1823,12 +1890,28 @@ const EMPTY_FS = `precision highp float; out vec4 o; void main(){ o = vec4(1.0);
 
 const COMPOSITE_FS = `
 precision highp float; in vec2 vUV;
-uniform sampler2D uStroke; uniform vec3 uColour;
-uniform float uOpacity, uStrokeIsPhoto;
+uniform sampler2D uStroke, uWas; uniform vec3 uColour;
+uniform float uOpacity, uStrokeIsPhoto, uAbut;
 out vec4 o;
 void main(){
   vec4 s = texture(uStroke, vUV);
   o = uStrokeIsPhoto > 0.5 ? s*uOpacity : vec4(uColour*s.a*uOpacity, s.a*uOpacity);
+
+  /* Where two opaque strokes meet, each is anti-aliased against the cloth and
+     nothing joins them: a texel half covered by one and half by the other came
+     out three-quarters covered, with the cloth showing through the seam and the
+     later colour winning. The new stroke takes whatever it covers and the old
+     paint keeps what is left of what it had, which is right both at a seam and
+     where one stroke lands on another. */
+  if(uAbut > 0.5){
+    vec4 w = texture(uWas, vUV);
+    float keep = min(w.a, 1.0 - o.a);
+    float a = min(1.0, keep + o.a);
+    vec3 lay = o.a > 0.0 ? o.rgb/o.a : vec3(0.0);
+    vec3 had = w.a > 0.0 ? w.rgb/w.a : vec3(0.0);
+    vec3 c = a > 0.0 ? (lay*o.a + had*keep)/a : vec3(0.0);
+    o = vec4(c*a, a);
+  }
 }`;   // premultiplied, so blending is a plain "over"
 
 /* the alternative fill: remove this shader to take it out.
@@ -2309,36 +2392,10 @@ class Painter {
        wholly the line or wholly bare, which is what decides where the fill
        stops - but the picture itself is only written where the fill lands, so
        the far side of a line is left exactly as it was drawn. */
-    const solid = new Uint8Array(S*S);
-    for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
-      const i = y*S + x;
-      const a = px[i*4 + 3];
-      if (!a) continue;
-      let top = 0;
-      for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) {
-        const nx = x+dx, ny = y+dy;
-        if (nx < 0 || ny < 0 || nx >= S || ny >= S) continue;
-        const v = px[(ny*S + nx)*4 + 3];
-        if (v > top) top = v;
-      }
-      solid[i] = a > top*0.5 ? 1 : 0;
-    }
+    const solid = aliasWall(S, i => px[i*4 + 3]);
 
     // every texel the fill can reach, counting a part-covered one as bare
-    const out = new Uint8Array(S*S);
-    const q = [...start];
-    for (const i of start) out[i] = 1;
-    while (q.length) {
-      const i = q.pop(), x = i % S, y = (i/S)|0;
-      for (const [dx, dy] of [[1,0],[-1,0],[0,1],[0,-1]]) {
-        const nx = x+dx, ny = y+dy;
-        if (nx < 0 || ny < 0 || nx >= S || ny >= S) continue;
-        const j = ny*S + nx;
-        if (out[j] || solid[j]) continue;
-        out[j] = 1;
-        q.push(j);
-      }
-    }
+    const out = fillRegion(S, start, solid);
 
     const col = this.cur.colour;
     const r = Math.round(col[0]*255), g = Math.round(col[1]*255),
@@ -2367,40 +2424,32 @@ class Painter {
       px[i*4+2] = Math.round(b2*f); px[i*4+3] = alpha;
     }
 
-    /* Soften the join. Hardening squared off the edge between the fill and the
-       outline, which is a stair once they are different colours. Each filled
-       texel along that edge takes a share of the outline's colour, by how much
-       of its surroundings the outline holds - so the step becomes a ramp one
-       texel wide. Only the fill's side is touched; the outline keeps its own
-       texels exactly. */
-    /* Both sides of the join, not one. A texel takes a share of whatever is on
-       the other side of the edge, by how much of its surroundings that side
-       holds - so the fill's outer rim and the outline's inner rim each carry a
-       little of the other and the step becomes a ramp. Read from the picture as
-       it stands, so the two sides mix with each other rather than with a result
-       half made. A texel with nothing on the far side is left alone, which is
-       every part of the outline that the fill never reached. */
+    /* The rim where the fill meets ink, settled one way or the other - see
+       settleRim. */
+    const share = settleRim(S, out, i => px[i*4 + 3], i => {
+      const a2 = px[i*4 + 3], k = 255/a2;     // its own colour, at full strength
+      px[i*4] = Math.min(255, Math.round(px[i*4]*k));
+      px[i*4+1] = Math.min(255, Math.round(px[i*4+1]*k));
+      px[i*4+2] = Math.min(255, Math.round(px[i*4+2]*k));
+      px[i*4+3] = 255;
+    });
+
+    /* One pass of anti-aliasing between the two colours, and only one. Every
+       rim cell now stands at full strength, so the edge between the fill and
+       the outline is hard and jagged; each of those cells is given back exactly
+       the share of ink it held before, with the fill making up the rest. A
+       cell that was three quarters outline comes out three quarters outline.
+       Mixing while filling and then softening on top blended the same boundary
+       twice and spread it over several cells, which is what reads as a ring. */
     const soft = new Uint8Array(px);
-    for (let y = 1; y < S-1; y++) for (let x = 1; x < S-1; x++) {
-      const i = y*S + x;
-      const mine = out[i] ? 1 : (solid[i] ? 2 : 0);
-      if (!mine) continue;
-      let n = 0, edge = 0, er = 0, eg = 0, eb = 0, ea = 0;
-      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
-        const j = (y+dy)*S + (x+dx);
-        n++;
-        const theirs = out[j] ? 1 : (solid[j] ? 2 : 0);
-        if (!theirs || theirs === mine) continue;
-        edge++;
-        er += px[j*4]; eg += px[j*4+1]; eb += px[j*4+2]; ea += px[j*4+3];
-      }
-      if (!edge) continue;
-      const w = edge/n;                       // how much of it the far side holds
-      // both are premultiplied, so they mix straight
-      soft[i*4]   = Math.round(px[i*4]  *(1-w) + (er/edge)*w);
-      soft[i*4+1] = Math.round(px[i*4+1]*(1-w) + (eg/edge)*w);
-      soft[i*4+2] = Math.round(px[i*4+2]*(1-w) + (eb/edge)*w);
-      soft[i*4+3] = Math.round(px[i*4+3]*(1-w) + (ea/edge)*w);
+    for (let i = 0; i < S*S; i++) {
+      const w = share[i];
+      if (!w || w >= 1) continue;
+      const [r2, g2, b2] = wm ? inkAt(i) : [r, g, b];
+      soft[i*4]   = Math.round(px[i*4]  *w + r2*f*(1-w));
+      soft[i*4+1] = Math.round(px[i*4+1]*w + g2*f*(1-w));
+      soft[i*4+2] = Math.round(px[i*4+2]*w + b2*f*(1-w));
+      soft[i*4+3] = Math.round(255*w + alpha*(1-w));
     }
 
     gl.bindTexture(gl.TEXTURE_2D, this.paint);
@@ -2584,7 +2633,13 @@ class Painter {
 
   endStroke() {
     const P = this.pComp;
-    gl.bindFramebuffer(gl.FRAMEBUFFER, this.fPaint);
+    /* An opaque stroke joins what is already there rather than being laid over
+       it, which needs the old paint readable while the new is written - so it
+       goes to the spare buffer and is moved back. A translucent one is laid
+       over as before: a wash is meant to show what is under it. */
+    const abut = !this.cur.erase && !this.cur.under
+      && !this.cur.isPhoto && this.cur.opacity >= 0.999;
+    gl.bindFramebuffer(gl.FRAMEBUFFER, abut ? this.fDisp : this.fPaint);
     gl.viewport(0, 0, this.size, this.size);
     gl.disable(gl.DEPTH_TEST);
     gl.enable(gl.BLEND);
@@ -2601,11 +2656,28 @@ class Painter {
     gl.uniform3fv(P.u.uColour, this.cur.colour);
     gl.uniform1f(P.u.uOpacity, this.cur.opacity);
     gl.uniform1f(P.u.uStrokeIsPhoto, this.cur.isPhoto ? 1 : 0);
+    gl.uniform1f(P.u.uAbut, abut ? 1 : 0);
+    if (abut) {
+      gl.disable(gl.BLEND);                  // the shader does the joining
+      gl.activeTexture(gl.TEXTURE1);
+      gl.bindTexture(gl.TEXTURE_2D, this.paint);
+      gl.uniform1i(P.u.uWas, 1);
+    }
     gl.bindVertexArray(quadVao);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
     gl.bindVertexArray(null);
     gl.disable(gl.BLEND);
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    if (abut) {
+      const f = fbo(this.disp);
+      gl.bindFramebuffer(gl.READ_FRAMEBUFFER, f);
+      gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, this.fPaint);
+      gl.blitFramebuffer(0, 0, this.size, this.size, 0, 0, this.size, this.size,
+        gl.COLOR_BUFFER_BIT, gl.NEAREST);
+      gl.bindFramebuffer(gl.READ_FRAMEBUFFER, null);
+      gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, null);
+      gl.deleteFramebuffer(f);
+    }
 
     this.clearStroke();
     this.dilate();
@@ -2847,7 +2919,14 @@ function makeModelStroker() {
   const dpr = () => Math.min(devicePixelRatio || 1, 2);
   return makeStroker({
     erasing: () => ctlState.bar.erase,
-    get step() { return Math.max(radius*dpr()*0.18, 1.2); },
+    /* How far apart to put one dab from the next. In css pixels, because that is
+     what it is compared against: walkSegment measures the distance between two
+     pointer positions, and those are css pixels from the canvas corner.
+     Multiplying by the device ratio put the dabs twice as far apart on a 2x
+     screen, so a free-hand stroke came out thinner than a straight line there
+     and thickened when smoothing pulled the points back together. The pad has
+     always measured this in css pixels. */
+  get step() { return Math.max(radius*0.18, 1.2); },
     jitter: 4,
     live: true,                      // dabs land as they are made
     ownTools: true,                  // line and fill have their own route here
@@ -5709,37 +5788,11 @@ function makePad(who, white) {
          board itself is written only where the fill lands, so the far side of
          a stroke is left exactly as it was drawn. */
       const N2 = PAD_N;
-      const solid = new Uint8Array(N2*N2);
-      for (let y = 0; y < N2; y++) for (let x = 0; x < N2; x++) {
-        const i = y*N2 + x, al = d[i*4+3];
-        if (!al) continue;
-        let top = 0;
-        for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) {
-          const nx = x+dx, ny = y+dy;
-          if (nx < 0 || ny < 0 || nx >= N2 || ny >= N2) continue;
-          const v = d[(ny*N2 + nx)*4 + 3];
-          if (v > top) top = v;
-        }
-        solid[i] = al > top*0.5 ? 1 : 0;
-      }
+      const solid = aliasWall(N2, i => d[i*4 + 3]);
+
       if (solid[i0]) return;
 
-      const out = new Uint8Array(N2*N2);
-      {
-        const q = [i0];
-        out[i0] = 1;
-        while (q.length) {
-          const i = q.pop(), x = i % N2, y = (i/N2)|0;
-          for (const [dx, dy] of [[1,0],[-1,0],[0,1],[0,-1]]) {
-            const nx = x+dx, ny = y+dy;
-            if (nx < 0 || ny < 0 || nx >= N2 || ny >= N2) continue;
-            const j = ny*N2 + nx;
-            if (out[j] || solid[j]) continue;
-            out[j] = 1;
-            q.push(j);
-          }
-        }
-      }
+      const out = fillRegion(N2, [i0], solid);
 
       /* the metallic extension: shaded across the region, as it is on the
          garment - one flat colour would make a metallic fill look painted. */
@@ -5758,31 +5811,27 @@ function makePad(who, white) {
         d[i*4] = r2; d[i*4+1] = g2; d[i*4+2] = b2; d[i*4+3] = ca;
       }
 
+      /* The rim where the fill meets ink, settled the same way the garment
+         settles its own. See settleRim. */
+      const share = settleRim(N2, out, i => d[i*4 + 3], i => {
+        d[i*4 + 3] = 255;              // its own colour, at full strength
+      });
+
       /* Both sides of the join take a share of the other, so the step between
          them becomes a ramp. A cell with nothing on the far side is left alone,
          which is every part of a stroke the fill never reached. */
-      {
-        const was = new Uint8ClampedArray(d);
-        for (let y = 1; y < N2-1; y++) for (let x = 1; x < N2-1; x++) {
-          const i = y*N2 + x;
-          const mine = out[i] ? 1 : (solid[i] ? 2 : 0);
-          if (!mine) continue;
-          let n = 0, edge = 0, er = 0, eg = 0, eb = 0, ea = 0;
-          for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
-            const j = (y+dy)*N2 + (x+dx);
-            n++;
-            const theirs = out[j] ? 1 : (solid[j] ? 2 : 0);
-            if (!theirs || theirs === mine) continue;
-            edge++;
-            er += was[j*4]; eg += was[j*4+1]; eb += was[j*4+2]; ea += was[j*4+3];
-          }
-          if (!edge) continue;
-          const w = edge/n;
-          d[i*4]   = Math.round(was[i*4]  *(1-w) + (er/edge)*w);
-          d[i*4+1] = Math.round(was[i*4+1]*(1-w) + (eg/edge)*w);
-          d[i*4+2] = Math.round(was[i*4+2]*(1-w) + (eb/edge)*w);
-          d[i*4+3] = Math.round(was[i*4+3]*(1-w) + (ea/edge)*w);
-        }
+      /* One pass of anti-aliasing between the two colours, and only one - the
+         same as the garment does. Every rim cell stands at full strength, so
+         the edge is hard and jagged; each is given back exactly the share of
+         ink it held, with the fill making up the rest. */
+      for (let i = 0; i < N2*N2; i++) {
+        const w = share[i];
+        if (!w || w >= 1) continue;
+        const [r2, g2, b2] = metalOn ? inkAt(i) : [cr, cg, cb];
+        d[i*4]   = Math.round(d[i*4]  *w + r2*(1-w));
+        d[i*4+1] = Math.round(d[i*4+1]*w + g2*(1-w));
+        d[i*4+2] = Math.round(d[i*4+2]*w + b2*(1-w));
+        d[i*4+3] = Math.round(255*w + ca*(1-w));
       }
 
       baseCtx.putImageData(img, 0, 0);
