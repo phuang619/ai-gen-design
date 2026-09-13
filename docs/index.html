@@ -339,7 +339,7 @@ canvas.grab{cursor:grab}
          style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none">
 </div>
 
-<div id="ver">2026-09-12 14:32</div>
+<div id="ver">2026-09-13 01:09</div>
 <script>
 /* Read while the painter sizes its buffers, so it lives at the very top of the
    script. Declared further down it fell in the dead zone; tucked inside a
@@ -3683,10 +3683,17 @@ function local(e) {
   const dpr = Math.min(devicePixelRatio || 1, 2);
   return [(e.clientX - r.left) * dpr, cv.height - (e.clientY - r.top) * dpr];
 }
+let lastPen = 1;
 function pressureOf(e) {
   // Only a stylus reports meaningful pressure; a mouse always says 0.5, which
   // would silently paint every mouse stroke at two thirds of the chosen size.
-  return e.pointerType === 'pen' ? (e.pressure || 0.5) : 1;
+  if (e.pointerType !== 'pen') return 1;
+  /* A stylus reports nothing at the moment it leaves the glass, and zero is a
+     reading, not a gap - treated as one it fell back to a half, so a line laid
+     down on release came out at two thirds of the size asked for. The weight
+     it was last held at is the one it was drawn with. */
+  if (e.pressure > 0) { lastPen = e.pressure; return e.pressure; }
+  return lastPen;
 }
 /* ---- pieces shared by the model and the shape pad ------------------------
    The two draw onto different things, but the shapes of the work are the same:
@@ -3808,7 +3815,8 @@ function makeStroker(t) {
         if (tl === 'fill') { t.fill(p); return; }
         if (tl === 'line') { lineFrom2 = p; lineTo = p; show(); return; }
       }
-      pts = [p]; from = 0; still = null; eased = false;
+      // the weight goes with the point, or redrawing it has to guess
+      pts = [[p[0], p[1], pressure]]; from = 0; still = null; eased = false;
       t.dab(p, pressure);
       // A target that lays dabs as they are made has nothing to redraw yet, and
       // redrawing would wipe the buffer the stroke was just set up in.
@@ -3818,7 +3826,7 @@ function makeStroker(t) {
       if (lineFrom2) { lineTo = p; show(); return; }
       if (!pts) return;
       const n = walkSegment(pts[pts.length-1], p, t.step, q => {
-        pts.push(q);
+        pts.push([q[0], q[1], pressure]);   // the weight goes with the point
         if (t.live) t.dab(q, pressure);
       });
       if (n > 0 && !t.live) show();
@@ -4134,7 +4142,8 @@ function endPointer(e) {
     const dpr = Math.min(devicePixelRatio || 1, 2);
     const pr = pressureOf(e);
     stampAt(lineFrom, pr);
-    walkSegment(lineFrom, to, Math.max(radius*dpr*0.18, 1.2), q => stampAt(q, pr));
+    // in css pixels, as walkSegment measures - the same as the free-hand step
+    walkSegment(lineFrom, to, Math.max(radius*0.18, 1.2), q => stampAt(q, pr));
     lineFrom = null;
     stopStroke();
   } else if (p && p.role === 'paint') stopStroke();
